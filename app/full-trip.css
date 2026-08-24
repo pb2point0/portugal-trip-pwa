@@ -6,7 +6,7 @@
 .editorial-portrait{width:100vw;margin:0 calc(50% - 50vw) 42px;background:#91aab2;overflow:hidden}
 .editorial-portrait img{display:block;width:auto;height:min(100svh,1600px);max-width:100%;margin:0 auto;object-fit:contain}
 @media(max-width:620px){
-  .editorial-portrait{margin-bottom:28px}
+  .editorial-portrait{width:calc(100% + 28px);margin:0 -14px 28px}
   .editorial-portrait img{width:100%;height:auto;max-width:none}
 }
 
@@ -172,6 +172,11 @@
 .day-editor-actions button.primary{border-color:var(--ocean);background:var(--ocean);color:#fff}
 .day-editor-actions button:disabled{opacity:.55;cursor:wait}
 @media(max-width:620px){
+  html,body{width:100%;max-width:100%;overflow-x:hidden;overscroll-behavior-x:none}
+  .app-shell,.page-wrap{width:100%;max-width:100%;min-width:0;overflow-x:hidden}
+  .site-header{width:100%;max-width:100%;min-width:0}
+  .day-row.open{margin:7px 0}
+  .hero-grid:before{right:0}
   .drive-select{display:grid;gap:7px;margin-bottom:12px}
   .drive-select>span{color:var(--forest);font-size:9px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}
   .drive-select select{width:100%;min-height:48px;border:1px solid #91b7b2;border-radius:13px;background:#fff;color:var(--ink);padding:0 13px;font-size:13px;font-weight:800}

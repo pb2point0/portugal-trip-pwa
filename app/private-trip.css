@@ -1,0 +1,42 @@
+.account-button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 145px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 7px;
+  cursor: pointer;
+}
+
+.account-button span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 9px;
+}
+
+.empty-trip {
+  min-height: calc(100svh - 160px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  max-width: 620px;
+  margin: auto;
+}
+
+.empty-trip > svg { color: var(--forest); margin-bottom: 18px; }
+.empty-trip h1 { font: 500 clamp(48px,7vw,82px)/.95 Georgia,serif; letter-spacing: -.05em; margin: 12px 0; }
+.empty-trip > p:not(.kicker) { font: 400 17px/1.6 Georgia,serif; color: var(--muted); max-width: 530px; }
+.empty-trip button { display: flex; align-items: center; gap: 8px; border: 0; border-radius: 13px; background: var(--ocean); color: #fff; padding: 14px 18px; font-weight: 800; cursor: pointer; margin: 16px 0; }
+.empty-trip small { color: var(--muted); }
+
+@media (max-width: 900px) { .account-button span { display: none; } }
+@media (max-width: 620px) {
+  .account-button { display: none; }
+  .bottom-nav { grid-template-columns: repeat(5,1fr); }
+  .mobile-menu button + button { margin-top: 7px; }
+}

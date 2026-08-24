@@ -149,3 +149,37 @@
   .map-toolbar a{width:100%;justify-content:center}
   .map-layer-actions{width:100%;display:grid;grid-template-columns:1fr}
 }
+/* Reliable drive selector and private day editor */
+.drive-select{display:none}
+.day-detail-actions{grid-column:1/-1;justify-content:flex-end}
+.day-detail-actions button{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ocean);padding:9px 11px;font-size:9px;font-weight:900;cursor:pointer}
+.day-details .day-editor{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:14px;border:1px solid rgba(15,72,91,.1);border-radius:17px;background:#fff;padding:18px;color:var(--ink);box-shadow:0 12px 32px rgba(7,61,87,.07)}
+.day-editor-heading{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.day-editor-heading h3{margin:5px 0 0;font:500 23px Georgia,serif}
+.day-editor-preset{border:0;border-radius:11px;background:var(--sand2);color:var(--ocean);padding:10px 12px;font-size:9px;font-weight:900;cursor:pointer}
+.day-editor label{display:grid;gap:6px}
+.day-editor label>span{color:var(--forest);font-size:9px;font-weight:900;letter-spacing:.09em;text-transform:uppercase}
+.day-editor textarea,.day-editor select{width:100%;border:1px solid var(--line);border-radius:11px;background:#fbfcfa;color:var(--ink);padding:11px;font:400 12px/1.5 Arial,Helvetica,sans-serif;outline:none}
+.day-editor textarea{min-height:88px;resize:vertical}
+.day-editor textarea:focus,.day-editor select:focus{border-color:var(--ocean);box-shadow:0 0 0 3px rgba(15,72,91,.08)}
+.day-editor-note{grid-column:1/-1}
+.day-editor-todo{grid-column:1/-1!important;display:flex!important;grid-template-columns:none!important;align-items:center;gap:9px!important;padding:11px 12px;border-radius:11px;background:var(--sky2)}
+.day-editor-todo input{width:17px;height:17px;accent-color:var(--ocean)}
+.day-editor-todo span{font-size:10px!important;letter-spacing:0!important;text-transform:none!important}
+.day-save-note{grid-column:1/-1;margin:0;color:var(--coral);font-size:10px}
+.day-editor-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px}
+.day-editor-actions button{border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ocean);padding:10px 13px;font-size:10px;font-weight:900;cursor:pointer}
+.day-editor-actions button.primary{border-color:var(--ocean);background:var(--ocean);color:#fff}
+.day-editor-actions button:disabled{opacity:.55;cursor:wait}
+@media(max-width:620px){
+  .drive-select{display:grid;gap:7px;margin-bottom:12px}
+  .drive-select>span{color:var(--forest);font-size:9px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}
+  .drive-select select{width:100%;min-height:48px;border:1px solid #91b7b2;border-radius:13px;background:#fff;color:var(--ink);padding:0 13px;font-size:13px;font-weight:800}
+  .drive-picker{display:none}
+  .day-detail-actions{justify-content:stretch}
+  .day-detail-actions button{width:100%;justify-content:center}
+  .day-details .day-editor{grid-template-columns:1fr;padding:15px}
+  .day-editor-heading{display:grid}.day-editor-preset{width:100%}
+  .day-editor-note,.day-editor-heading,.day-editor-actions,.day-save-note{grid-column:auto}
+  .day-editor-actions{display:grid;grid-template-columns:1fr 1fr}
+}

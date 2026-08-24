@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { BedDouble, CalendarDays, CarFront, ChevronRight, Compass, Copy, ExternalLink, FileSpreadsheet, Heart, House, Languages, ListChecks, LogOut, MapPin, Menu, NotebookText, Route, Search, Upload, Utensils, Volume2, X } from 'lucide-react';
-import { emptyTrip, type BookingItem, type Status, type TripPayload } from './trip-data';
+import { emptyTrip, type BookingItem, type Status, type TripDay, type TripPayload } from './trip-data';
 import PortugalAi from './PortugalAi';
 import { WeatherForecast } from './trip-live';
 import './full-trip.css';
@@ -93,12 +93,16 @@ type FullTripAppProps = { supabase:SupabaseClient; userEmail:string; onSignOut:(
 
 export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTripAppProps) {
   const [view, setView] = useState<View>('today');
-  const [selectedDriveId, setSelectedDriveId] = useState('');
+  const [selectedDriveIndex, setSelectedDriveIndex] = useState(0);
   const [trip, setTrip] = useState<TripPayload>(emptyTrip);
   const [tripId, setTripId] = useState('primary');
   const [loadingTrip, setLoadingTrip] = useState(true);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [expandedBooking, setExpandedBooking] = useState<string | null>(null);
+  const [editingDay, setEditingDay] = useState<TripDay | null>(null);
+  const [savingDay, setSavingDay] = useState(false);
+  const [daySaveNote, setDaySaveNote] = useState('');
+  const [addTransportTodo, setAddTransportTodo] = useState(false);
   const [importNote, setImportNote] = useState('Loading private trip data…');
   const [menuOpen, setMenuOpen] = useState(false);
   const [translateText, setTranslateText] = useState('');
@@ -118,7 +122,7 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
         setTrip({ ...payload, drives: payload.drives ?? [] });
         setTripId(data.trip_id);
         setExpandedDay(payload.itinerary[0]?.date ?? null);
-        setSelectedDriveId(payload.drives?.[0]?.id ?? '');
+        setSelectedDriveIndex(0);
         setImportNote(`Private trip data synced · ${payload.itinerary.length} days`);
       } else {
         setImportNote(error ? `Could not sync: ${error.message}` : 'No trip data yet — import the workbook to begin');
@@ -146,7 +150,8 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
   const heroLede = tripPhase === 'during' ? currentTripDay?.plan : tripPhase === 'after' ? `${itinerary.length} private days of tiled cities, scenic roads, and Atlantic beaches—kept here to revisit.` : `${itinerary.length} private days between tiled cities, scenic roads, and Atlantic beaches.`;
   const dateRange = firstDay && lastDay ? `${compactDate(firstDay.date)}–${compactDate(lastDay.date)}` : 'Private dates';
   const routeStops = Array.from(new Set(itinerary.map((day) => day.base).filter(Boolean))).slice(0, 5);
-  const selectedDrive = drives.find((drive) => drive.id === selectedDriveId) ?? drives[0];
+  const activeDriveIndex = selectedDriveIndex < drives.length ? selectedDriveIndex : 0;
+  const selectedDrive = drives[activeDriveIndex];
   const googleTranslateUrl = `https://translate.google.com/?sl=${direction==='en-pt'?'en':'pt'}&tl=${direction==='en-pt'?'pt':'en'}&text=${encodeURIComponent(translateText)}&op=translate`;
 
   function openView(next:View) {
@@ -166,6 +171,75 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
     speechSynthesis.speak(utterance);
   }
 
+  function editDay(day:TripDay) {
+    setEditingDay({...day});
+    setDaySaveNote('');
+    setAddTransportTodo(false);
+  }
+
+  function updateDayDraft<K extends keyof TripDay>(field:K,value:TripDay[K]) {
+    setEditingDay((current) => current ? {...current,[field]:value} : current);
+  }
+
+  function useBookedTransportPreset() {
+    setAddTransportTodo(true);
+    setEditingDay((current) => {
+      if (!current) return current;
+      const reminder='Activity is booked; transportation remains to arrange.';
+      return {
+        ...current,
+        transport:'TBD — arrange transportation to/from this activity',
+        status:'PLAN',
+        note:current.note.includes(reminder) ? current.note : [current.note,reminder].filter(Boolean).join(' '),
+      };
+    });
+  }
+
+  async function saveEditedDay() {
+    if (!editingDay) return;
+    if (!editingDay.plan.trim()) {
+      setDaySaveNote('Add a plan before saving.');
+      return;
+    }
+    setSavingDay(true);
+    setDaySaveNote('');
+    try {
+      let nextBookings=trip.bookings;
+      if (addTransportTodo) {
+        const dateLabel=compactDate(editingDay.date);
+        const hasTransportTask=trip.bookings.some((item) => {
+          const description=(item.item+' '+item.choice).toLowerCase();
+          return description.includes('transport') && description.includes(dateLabel.toLowerCase());
+        });
+        if (!hasTransportTask) {
+          const shortPlan=editingDay.plan.split(/[—·:]/)[0].trim().slice(0,48) || 'Activity';
+          nextBookings=[
+            {priority:1,item:shortPlan+' transportation — '+dateLabel,choice:'Arrange transportation to and from this activity',amount:0,status:'PLAN',action:'Plan transport'},
+            ...trip.bookings.map((item) => ({...item,priority:item.priority+1})),
+          ];
+        }
+      }
+      const nextTrip:TripPayload={
+        ...trip,
+        itinerary:trip.itinerary.map((day) => day.date===editingDay.date ? editingDay : day),
+        bookings:nextBookings,
+      };
+      const { data:userData } = await supabase.auth.getUser();
+      const { error } = await supabase.from('trip_data').upsert({
+        trip_id:tripId,
+        payload:nextTrip,
+        updated_by:userData.user?.id,
+      });
+      if (error) throw new Error(error.message);
+      setTrip(nextTrip);
+      setEditingDay(null);
+      setImportNote('Private trip data synced · '+fmtDate(editingDay.date)+' updated');
+    } catch (error) {
+      setDaySaveNote(error instanceof Error ? error.message : 'This day could not be saved.');
+    } finally {
+      setSavingDay(false);
+    }
+  }
   async function importWorkbook(file: File) {
     try {
       setImportNote(`Reading ${file.name}…`);
@@ -334,6 +408,17 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
                 <div className="day-detail-card"><BedDouble size={18}/><span><b>Home base</b>{day.sleep || day.base}</span></div>
                 <div className="day-detail-card"><NotebookText size={18}/><span><b>Worth remembering</b>{day.note || 'No extra planning note for this day.'}</span></div>
                 {day.transport&&<div className="travel-note"><CarFront size={16}/><span><b>Travel note</b>{day.transport}</span></div>}
+                <div className="day-detail-actions"><button type="button" onClick={()=>editDay(day)}><NotebookText size={15}/>Edit this day</button></div>
+                {editingDay?.date===day.date&&<div className="day-editor" aria-label={'Edit '+fmtDate(day.date)}>
+                  <div className="day-editor-heading"><div><p className="kicker">Private day editor</p><h3>{fmtDate(day.date)}</h3></div><button type="button" className="day-editor-preset" onClick={useBookedTransportPreset}>Booked · transport TBD</button></div>
+                  <label><span>Plan</span><textarea value={editingDay.plan} onChange={(event)=>updateDayDraft('plan',event.target.value)}/></label>
+                  <label><span>Transportation</span><textarea value={editingDay.transport} onChange={(event)=>updateDayDraft('transport',event.target.value)} placeholder="What still needs to be arranged?"/></label>
+                  <label><span>Status</span><select value={editingDay.status} onChange={(event)=>updateDayDraft('status',event.target.value as Status)}><option value="PLAN">Plan</option><option value="DONE">Done</option><option value="BOOK NOW">Book now</option><option value="BOOK">Book</option><option value="CHECKOUT">Checkout</option></select></label>
+                  <label className="day-editor-note"><span>Note</span><textarea value={editingDay.note} onChange={(event)=>updateDayDraft('note',event.target.value)}/></label>
+                  <label className="day-editor-todo"><input type="checkbox" checked={addTransportTodo} onChange={(event)=>setAddTransportTodo(event.target.checked)}/><span>Add transportation to the To-do list</span></label>
+                  {daySaveNote&&<p className="day-save-note" role="status">{daySaveNote}</p>}
+                  <div className="day-editor-actions"><button type="button" onClick={()=>setEditingDay(null)}>Cancel</button><button type="button" className="primary" disabled={savingDay} onClick={()=>void saveEditedDay()}>{savingDay?'Saving…':'Save day'}</button></div>
+                </div>}
               </div>}
             </article>})}</div>
         </section>}
@@ -341,10 +426,11 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
         {view === 'drives' && <section className="content-page drives-page">
           <div className="page-title"><p className="kicker">Flexible route days</p><h1>Drive what the day gives you.</h1><p>Pick by weather and energy. Routes use mapped roads instead of straight connectors, while restaurant searches and the town cards below work together.</p></div>
           <div className="drives-layout">
-            <div className="drive-picker">{drives.map(drive=><button key={drive.id} className={selectedDrive?.id===drive.id?'active':''} onClick={()=>setSelectedDriveId(drive.id)}><i style={{background:drive.color}}/><div><small>{drive.priority} · {drive.duration}</small><strong>{drive.name}</strong><span>{drive.vibe}</span></div><b>→</b></button>)}</div>
+            <label className="drive-select"><span>Choose a driving route</span><select value={activeDriveIndex} onChange={(event)=>setSelectedDriveIndex(Number(event.target.value))}>{drives.map((drive,index)=><option key={drive.id+'-option-'+index} value={index}>{drive.name} · {drive.duration}</option>)}</select></label>
+            <div className="drive-picker">{drives.map((drive,index)=><button type="button" key={drive.id+'-'+index} className={activeDriveIndex===index?'active':''} aria-pressed={activeDriveIndex===index} onClick={()=>setSelectedDriveIndex(index)}><i style={{background:drive.color}}/><div><small>{drive.priority} · {drive.duration}</small><strong>{drive.name}</strong><span>{drive.vibe}</span></div><b>→</b></button>)}</div>
             {selectedDrive &&
             <div className="map-panel">
-              <RouteMap drive={selectedDrive}/>
+              <RouteMap key={activeDriveIndex} drive={selectedDrive}/>
               <div className="route-detail"><div><p className="kicker">{selectedDrive.distance} · {selectedDrive.duration}</p><h2>{selectedDrive.name}</h2></div><a href={`https://www.google.com/maps/dir/${selectedDrive.coords.map(([a,b])=>`${a},${b}`).join('/')}`} target="_blank" rel="noreferrer">Open directions <ExternalLink size={15}/></a>
                 <div className="stop-line">{selectedDrive.stops.map((stop,i)=><span key={`${stop}-${i}`}><i style={{borderColor:selectedDrive.color}}/>{stop}</span>)}</div>
                 <div className="route-notes"><p><b>Why this drive</b>{selectedDrive.note}</p><p><b>Best conditions</b>{selectedDrive.weather}</p></div>

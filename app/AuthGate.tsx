@@ -50,7 +50,7 @@ export default function AuthGate() {
       <div className="auth-mark">P</div>
       <p className="auth-kicker"><LockKeyhole size={13}/> Authorized travelers only</p>
       <h1>Private Portugal<br/><em>trip.</em></h1>
-      <p className="auth-lede">Sign in to open the protected itinerary, reservations, routes, and budget.</p>
+      <p className="auth-lede">Sign in to open the protected itinerary, reservations, routes, and plans.</p>
       {!isSupabaseConfigured ? <div className="auth-setup"><KeyRound size={20}/><div><strong>Supabase setup needed</strong><p>Add the project URL and publishable key to the GitHub repository secrets before deployment.</p></div></div> : <div className="auth-form">
         <label htmlFor="email">Email</label>
         <div><Mail size={18}/><input id="email" type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com"/></div>

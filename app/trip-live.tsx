@@ -4,11 +4,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { CarFront, Cloud, CloudRain, ExternalLink, Footprints, Navigation, Sun, Umbrella } from 'lucide-react';
 import type { TripDay } from './trip-data';
 
-type Place = { name:string; lat:number; lng:number };
+type Place = { name:string; lat:number; lng:number; timezone:string };
+const WEATHER_CACHE_KEY = 'trip-weather-v2-fahrenheit';
+const placeAliases:Record<string,Place> = {
+  ewr: { name:'Newark', lat:40.6895, lng:-74.1745, timezone:'America/New_York' },
+  newark: { name:'Newark', lat:40.6895, lng:-74.1745, timezone:'America/New_York' },
+  'newark liberty': { name:'Newark', lat:40.6895, lng:-74.1745, timezone:'America/New_York' },
+};
 function cachedForecast() {
   if (typeof window === 'undefined') return {};
   try {
-    const cached = JSON.parse(localStorage.getItem('trip-weather-v1') ?? 'null') as {savedAt:number; data:Record<string,Forecast>} | null;
+    const cached = JSON.parse(localStorage.getItem(WEATHER_CACHE_KEY) ?? 'null') as {savedAt:number; data:Record<string,Forecast>} | null;
     return cached && Date.now() - cached.savedAt < 3 * 60 * 60 * 1000 ? cached.data : {};
   } catch { return {}; }
 }
@@ -18,15 +24,17 @@ type Forecast = { date:string; code:number; high:number; low:number; rain:number
 const placeRequests = new Map<string,Promise<Place|null>>();
 function placeFor(base:string) {
   const key = base.trim().toLowerCase();
+  const alias = placeAliases[key];
+  if (alias) return Promise.resolve(alias);
   const existing = placeRequests.get(key);
   if (existing) return existing;
   const request = (async () => {
     const params = new URLSearchParams({name:base,count:'1',language:'en',format:'json',countryCode:'PT'});
     const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?${params}`);
     if (!response.ok) return null;
-    const payload = await response.json() as {results?:Array<{name:string;latitude:number;longitude:number}>};
+    const payload = await response.json() as {results?:Array<{name:string;latitude:number;longitude:number;timezone?:string}>};
     const result = payload.results?.[0];
-    return result ? {name:result.name,lat:result.latitude,lng:result.longitude} : null;
+    return result ? {name:result.name,lat:result.latitude,lng:result.longitude,timezone:result.timezone ?? 'Europe/Lisbon'} : null;
   })().catch(() => null);
   placeRequests.set(key,request);
   return request;
@@ -57,7 +65,7 @@ export function WeatherForecast({ days }: { days:TripDay[] }) {
   useEffect(() => {
     if (!requested.length) return;
     let cancelled = false;
-    const cacheKey = 'trip-weather-v1';
+
     async function load() {
       try {
         const resolved = await Promise.all(requested.map(async (day) => [day.base,await placeFor(day.base)] as const));
@@ -65,7 +73,8 @@ export function WeatherForecast({ days }: { days:TripDay[] }) {
         const uniquePlaces = [...new Map(resolved.filter((item):item is readonly [string,Place] => Boolean(item[1])).map(([,place]) => [`${place.lat},${place.lng}`,place])).values()];
         const results = await Promise.all(uniquePlaces.map(async (place) => {
           const params = new URLSearchParams({
-            latitude:String(place.lat), longitude:String(place.lng), timezone:'Europe/Lisbon', forecast_days:'16',
+            latitude:String(place.lat), longitude:String(place.lng), timezone:place.timezone, forecast_days:'16',
+            temperature_unit:'fahrenheit',
             daily:'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max',
           });
           const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
@@ -84,9 +93,10 @@ export function WeatherForecast({ days }: { days:TripDay[] }) {
           };
         }
         if (cancelled) return;
+        const loadedCount = Object.keys(next).length;
         setForecast(next);
-        localStorage.setItem(cacheKey, JSON.stringify({savedAt:Date.now(),data:next}));
-        setStatus(Object.keys(next).length ? 'Fresh forecast · temperatures in Celsius' : 'Forecasts appear 16 days before each date');
+        localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify({savedAt:Date.now(),data:next}));
+        setStatus(loadedCount ? 'Fresh forecast for '+loadedCount+' of '+requested.length+' days · temperatures in °F' : 'Forecasts appear 16 days before each date');
       } catch {
         if (!cancelled) setStatus('Offline · showing the last saved forecast when available');
       }
@@ -101,7 +111,7 @@ export function WeatherForecast({ days }: { days:TripDay[] }) {
       const item = forecast[day.date];
       return <article key={day.date} className={!item?'forecast-pending':''}>
         <span>{new Intl.DateTimeFormat('en-US',{weekday:'short',month:'short',day:'numeric',timeZone:'UTC'}).format(new Date(`${day.date}T12:00:00Z`))}</span>
-        {item ? <><WeatherIcon code={item.code}/><div><strong>{item.high}°</strong><small>{item.low}° low</small></div><p>{weatherCopy(item.code)} · {item.rain}% rain</p><b>{item.place}</b></> : <><Cloud size={21}/><div><strong>—</strong><small>Not in range</small></div><p>Forecast opens closer to this date</p><b>{day.base}</b></>}
+        {item ? <><WeatherIcon code={item.code}/><div><strong>{item.high}°F</strong><small>{item.low}°F low</small></div><p>{weatherCopy(item.code)} · {item.rain}% rain</p><b>{item.place}</b></> : <><Cloud size={21}/><div><strong>—</strong><small>Forecast pending</small></div><p>Live forecast available up to 16 days ahead</p><b>{day.base}</b></>}
       </article>;
     })}</div>
   </section>;

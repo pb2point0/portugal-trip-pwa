@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { BedDouble, CalendarDays, CarFront, CloudSun, Compass, Copy, ExternalLink, FileSpreadsheet, Heart, House, Languages, LogOut, MapPin, Menu, NotebookText, Route, Search, Upload, Utensils, Volume2, X } from 'lucide-react';
+import { BedDouble, CalendarDays, CarFront, ChevronRight, Compass, Copy, ExternalLink, FileSpreadsheet, Heart, House, Languages, ListChecks, LogOut, MapPin, Menu, NotebookText, Route, Search, Upload, Utensils, Volume2, X } from 'lucide-react';
 import { emptyTrip, type BookingItem, type Status, type TripPayload } from './trip-data';
 import PortugalAi from './PortugalAi';
 import { WeatherForecast } from './trip-live';
@@ -14,7 +14,7 @@ import './private-trip.css';
 import './translator.css';
 
 const RouteMap = dynamic(() => import('./RouteMap'), { ssr: false });
-type View = 'today' | 'itinerary' | 'drives' | 'translate';
+type View = 'today' | 'todo' | 'itinerary' | 'drives' | 'translate';
 
 const phrases = [
   {en:'Hello! Good morning.',pt:'Olá! Bom dia.',group:'Basics'},
@@ -38,6 +38,53 @@ const dateInPortugal = () => {
   return `${part('year')}-${part('month')}-${part('day')}`;
 };
 
+type BookingAction =
+  | { kind:'link'; label:string; href:string }
+  | { kind:'details'; label:string };
+
+function nextDate(date:string) {
+  const value = new Date(date+'T12:00:00Z');
+  value.setUTCDate(value.getUTCDate()+1);
+  return value.toISOString().slice(0,10);
+}
+
+function portoStayRange(itinerary:TripPayload['itinerary']) {
+  const portoDays = itinerary.filter((day) => (day.base+' '+day.sleep).toLowerCase().includes('porto'));
+  if (!portoDays.length) return null;
+  return { checkin:portoDays[0].date, checkout:nextDate(portoDays[portoDays.length-1].date) };
+}
+
+function bookingActionFor(item:BookingItem,itinerary:TripPayload['itinerary']):BookingAction {
+  if (item.href) return { kind:'link', label:item.action || 'Open details', href:item.href };
+
+  const description=(item.item+' '+item.choice).toLowerCase();
+  if (description.includes('porto') && /(lodging|hotel|stay|accommodation)/.test(description)) {
+    const stay=portoStayRange(itinerary);
+    const params=new URLSearchParams({
+      ss:'Porto, Portugal',
+      group_adults:'2',
+      no_rooms:'1',
+      group_children:'0',
+      ...(stay ?? {}),
+    });
+    return { kind:'link', label:'Book now', href:'https://www.booking.com/searchresults.html?'+params.toString() };
+  }
+
+  if (/(car|rental|automatic|vehicle|hire)/.test(description)) {
+    return { kind:'details', label:'Details' };
+  }
+
+  if (/(lodging|hotel|stay|accommodation)/.test(description)) {
+    const params=new URLSearchParams({ss:item.item+' '+item.choice+' Portugal',group_adults:'2',no_rooms:'1',group_children:'0'});
+    return { kind:'link', label:item.action || 'Find a stay', href:'https://www.booking.com/searchresults.html?'+params.toString() };
+  }
+
+  return {
+    kind:'link',
+    label:item.action || 'Find options',
+    href:'https://www.google.com/search?q='+encodeURIComponent(item.item+' '+item.choice+' Portugal'),
+  };
+}
 function IconForBase() {
   return <MapPin size={18} />;
 }
@@ -51,11 +98,13 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
   const [tripId, setTripId] = useState('primary');
   const [loadingTrip, setLoadingTrip] = useState(true);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
+  const [expandedBooking, setExpandedBooking] = useState<string | null>(null);
   const [importNote, setImportNote] = useState('Loading private trip data…');
   const [menuOpen, setMenuOpen] = useState(false);
   const [translateText, setTranslateText] = useState('');
   const [direction, setDirection] = useState<'en-pt'|'pt-en'>('en-pt');
   const fileRef = useRef<HTMLInputElement>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
   const { itinerary, bookings, drives } = trip;
 
   useEffect(() => {
@@ -100,6 +149,14 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
   const selectedDrive = drives.find((drive) => drive.id === selectedDriveId) ?? drives[0];
   const googleTranslateUrl = `https://translate.google.com/?sl=${direction==='en-pt'?'en':'pt'}&tl=${direction==='en-pt'?'pt':'en'}&text=${encodeURIComponent(translateText)}&op=translate`;
 
+  function openView(next:View) {
+    setView(next);
+    setMenuOpen(false);
+    requestAnimationFrame(() => {
+      pageRef.current?.scrollTo({top:0,behavior:'smooth'});
+      window.scrollTo({top:0,behavior:'smooth'});
+    });
+  }
   function speak(text: string, lang = 'pt-PT') {
     if (!('speechSynthesis' in window)) return;
     speechSynthesis.cancel();
@@ -164,6 +221,7 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
 
   const nav = [
     { id:'today' as View, label:'Today', icon:House },
+    { id:'todo' as View, label:'To-do', icon:ListChecks },
     { id:'itinerary' as View, label:'Trip', icon:CalendarDays },
     ...(drives.length ? [{ id:'drives' as View, label:'Drives', icon:Route }] : []),
     { id:'translate' as View, label:'Translate', icon:Languages },
@@ -172,7 +230,7 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
   return (
     <main className="app-shell">
       <header className="site-header">
-        <button className="wordmark" onClick={() => setView('today')} aria-label="Go to trip overview"><span className="trip-mark" aria-hidden="true">
+        <button className="wordmark" onClick={() => openView('today')} aria-label="Go to trip overview"><span className="trip-mark" aria-hidden="true">
   <svg viewBox="0 0 48 48">
     <circle className="trip-mark-sun" cx="31.5" cy="16.5" r="4.5"/>
     <path className="trip-mark-ray" d="M31.5 7.5v3M31.5 22.5v3M22.5 16.5h3M37.5 16.5h3"/>
@@ -181,7 +239,7 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
   </svg>
 </span><div><small>Private trip</small><strong>Portugal</strong></div></button>
         <nav className="desktop-nav" aria-label="Primary navigation">
-          {nav.map(({id,label}) => <button key={id} className={view===id?'active':''} onClick={() => setView(id)}>{label}</button>)}
+          {nav.map(({id,label}) => <button key={id} className={view===id?'active':''} onClick={() => openView(id)}>{label}</button>)}
         </nav>
         <button className="import-button" onClick={() => fileRef.current?.click()}><Upload size={16}/> Refresh from Excel</button>
         <button className="account-button" onClick={() => void onSignOut()} title={`Sign out ${userEmail}`}><span>{userEmail}</span><LogOut size={16}/></button>
@@ -191,7 +249,7 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
 
       {menuOpen && <div className="mobile-menu"><button onClick={() => fileRef.current?.click()}><FileSpreadsheet size={18}/>Refresh from Excel</button><button onClick={() => void onSignOut()}><LogOut size={18}/>Sign out</button><p>{userEmail}<br/>{importNote}</p></div>}
 
-      <div className="page-wrap">
+      <div ref={pageRef} className="page-wrap">
         {loadingTrip && <section className="empty-trip"><div className="auth-loader"/><h2>Syncing your private trip…</h2></section>}
         {!loadingTrip && itinerary.length === 0 && <section className="empty-trip"><FileSpreadsheet size={34}/><p className="kicker">Private trip space ready</p><h1>Bring in the workbook.</h1><p>Your itinerary and booking details will be stored in Supabase and shared only with invited travelers.</p><button className="primary" onClick={() => fileRef.current?.click()}><Upload size={17}/> Import Excel workbook</button><small>{importNote}</small></section>}
         {!loadingTrip && itinerary.length > 0 && <>
@@ -201,7 +259,7 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
               <p className="kicker"><Heart size={13} fill="currentColor"/> Protected trip space</p>
               <h1>{heroTitle}</h1>
               <p className="hero-lede">{heroLede}</p>
-              <div className="hero-actions"><button className="primary" onClick={() => setView('itinerary')}>See the full trip <CalendarDays size={17}/></button>{drives.length > 0 && <button className="secondary" onClick={() => setView('drives')}>Choose a drive <CarFront size={17}/></button>}</div>
+              <div className="hero-actions"><button className="primary" onClick={() => openView('itinerary')}>See the full trip <CalendarDays size={17}/></button>{drives.length > 0 && <button className="secondary" onClick={() => openView('drives')}>Choose a drive <CarFront size={17}/></button>}</div>
             </div>
             <aside className="countdown-card">
               <div className="sun-orbit"><span>{tripPhase==='before'?daysUntil:tripPhase==='during'?currentDayIndex+1:itinerary.length}</span><small>{tripPhase==='during'?'day':'days'}</small></div>
@@ -221,21 +279,46 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
             /></div>
             <div className="memory-copy"><p className="kicker">Why we travel</p><h2>A quiet pause between the plans.</h2><p>The itinerary holds the details. The best parts can still happen in the spaces between them.</p></div>
           </section>
-          <section className="overview-grid">
-            <article className="now-card">
-              <div className="section-label"><CloudSun size={16}/> Trip pulse</div>
-              <div className="now-head"><div><span>{upcomingBookings.length} {upcomingBookings.length===1?'thing':'things'} still need attention</span><h2>{completion===100?'Everything important is ready.':'Ready, with room to wander.'}</h2></div><span className="progress-ring" style={{background:`conic-gradient(var(--forest) ${completion}%,var(--sky) 0)`}}><i>{completion}%</i></span></div>
-              <div className="action-list">{upcomingBookings.slice(0,3).map(item=><article key={item.item}><span className={`status-dot ${statusClass(item.status)}`}/><div><strong>{item.item}</strong><small>{item.choice}</small></div><span>{item.status}</span></article>)}</div>
-            </article>
+          <section className="todo-teaser" aria-label="Trip to-do summary">
+            <button className="todo-teaser-button" onClick={()=>openView('todo')}>
+              <span className="todo-teaser-icon"><ListChecks size={22}/></span>
+              <span className="todo-teaser-copy"><span className="kicker">To-do</span><strong>{upcomingBookings.length ? upcomingBookings.length+' '+(upcomingBookings.length===1?'thing':'things')+' to finish' : 'Everything important is ready'}</strong><small>Reservations, bookings, and the choices that still need attention.</small></span>
+              <span className="todo-teaser-link">Open list <ChevronRight size={17}/></span>
+            </button>
+            <span className="todo-teaser-meter" aria-label={completion+' percent complete'}><i style={{width:completion+'%'}}/></span>
           </section>
           <WeatherForecast days={previewDays}/>
           <PortugalAi supabase={supabase}/>
           <section className="next-days">
-            <div className="section-heading"><div><p className="kicker">{tripPhase==='after'?'Favorite final chapters':'The days ahead'}</p><h2>{tripPhase==='during'?'From here, gently.':'Your route at a glance.'}</h2></div><button onClick={()=>setView('itinerary')}>All {itinerary.length} days →</button></div>
+            <div className="section-heading"><div><p className="kicker">{tripPhase==='after'?'Favorite final chapters':'The days ahead'}</p><h2>{tripPhase==='during'?'From here, gently.':'Your route at a glance.'}</h2></div><button onClick={()=>openView('itinerary')}>All {itinerary.length} days →</button></div>
             <div className="day-preview">{previewDays.map(day=><article key={day.date}><span>{fmtDate(day.date)}</span><IconForBase/><h3>{day.base}</h3><p>{day.plan}</p><small className={`pill ${statusClass(day.status)}`}>{day.status}</small></article>)}</div>
           </section>
         </>}
 
+        {view === 'todo' && <section className="content-page todo-page">
+          <div className="page-title"><p className="kicker">To-do · {completedBookings} of {bookings.length} complete</p><h1>The details worth finishing.</h1><p>Every open choice and reservation lives here. Tap an action to book, search, or open the details already attached to your private trip.</p></div>
+          <div className="todo-summary">
+            <div><span>{upcomingBookings.length} {upcomingBookings.length===1?'item':'items'} open</span><h2>{completion===100?'You are ready to go.':'A clear path to ready.'}</h2></div>
+            <strong>{completion}% ready</strong>
+            <span className="todo-summary-meter" aria-hidden="true"><i style={{width:completion+'%'}}/></span>
+          </div>
+          {bookings.length ? <div className="todo-table">{bookings.map((item)=>{
+            const action=bookingActionFor(item,itinerary);
+            const bookingKey=item.priority+'-'+item.item;
+            const detailsOpen=expandedBooking===bookingKey;
+            const complete=item.status==='DONE';
+            return <article key={bookingKey} className={'todo-row'+(complete?' completed':'')}>
+              <span className="priority">{String(item.priority).padStart(2,'0')}</span>
+              <div className="todo-row-copy"><strong>{item.item}</strong><small>{item.choice || 'No preference added yet'}</small></div>
+              <span className={'pill todo-status '+statusClass(item.status)}>{item.status}</span>
+              {action.kind==='link'
+                ? <a className="todo-row-action" href={action.href} target="_blank" rel="noreferrer">{action.label}<ExternalLink size={14}/></a>
+                : <button className="todo-row-action" type="button" aria-expanded={detailsOpen} onClick={()=>setExpandedBooking(detailsOpen?null:bookingKey)}>{detailsOpen?'Close':action.label}<ChevronRight size={14}/></button>}
+              {detailsOpen&&<div className="booking-detail-placeholder"><CarFront size={18}/><div><strong>Reservation details coming soon.</strong><p>No confirmation file is connected yet. When you upload it, this card can be linked to private trip storage without placing reservation details in the public website files.</p></div></div>}
+            </article>;
+          })}</div> : <div className="todo-empty"><ListChecks size={25}/><h2>No to-do items yet.</h2><p>Refresh from the workbook when you are ready to add bookings and decisions.</p></div>}
+          <div className="privacy-note"><NotebookText size={21}/><div><strong>Reservation files stay private.</strong><p>Confirmation documents should be connected through protected trip storage, not copied into the public image or download folders.</p></div></div>
+        </section>}
         {view === 'itinerary' && <section className="content-page">
           <div className="page-title"><p className="kicker">{dateRange} · {itinerary.length} days</p><h1>The whole journey.</h1><p>One clear idea for every day: where you are, what the day is for, and the few details worth remembering.</p></div>
           <div className="itinerary-list">{itinerary.map((day,index)=>{
@@ -256,7 +339,7 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
         </section>}
 
         {view === 'drives' && <section className="content-page drives-page">
-          <div className="page-title"><p className="kicker">Flexible route days</p><h1>Drive what the day gives you.</h1><p>Pick by weather and energy. Routes now follow mapped roads, and you can reveal ten nearby restaurants without leaving the drive.</p></div>
+          <div className="page-title"><p className="kicker">Flexible route days</p><h1>Drive what the day gives you.</h1><p>Pick by weather and energy. Routes use mapped roads instead of straight connectors, while restaurant searches and the town cards below work together.</p></div>
           <div className="drives-layout">
             <div className="drive-picker">{drives.map(drive=><button key={drive.id} className={selectedDrive?.id===drive.id?'active':''} onClick={()=>setSelectedDriveId(drive.id)}><i style={{background:drive.color}}/><div><small>{drive.priority} · {drive.duration}</small><strong>{drive.name}</strong><span>{drive.vibe}</span></div><b>→</b></button>)}</div>
             {selectedDrive &&
@@ -271,7 +354,7 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
               </div>
             </div>}
           </div>
-          <p className="source-note">Road geometry comes from OpenStreetMap routing and is a planning aid. Check closures and conditions before leaving; restaurant pins are nearby named places, not a rating-based ranking.</p>
+          <p className="source-note">Road geometry comes from OpenStreetMap routing and is a planning aid. Check closures and conditions before leaving; restaurant searches open Google Maps for the route or a specific town.</p>
         </section>}
 
         {view === 'translate' && <section className="content-page translate-page">
@@ -288,7 +371,7 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
         </>}
       </div>
 
-      <nav className="bottom-nav" aria-label="Mobile navigation">{nav.map(({id,label,icon:Icon})=><button key={id} className={view===id?'active':''} onClick={()=>{setView(id);scrollTo({top:0,behavior:'smooth'})}}><Icon size={20}/>{label}</button>)}</nav>
+      <nav className="bottom-nav" style={{gridTemplateColumns:'repeat('+nav.length+',minmax(0,1fr))'}} aria-label="Mobile navigation">{nav.map(({id,label,icon:Icon})=><button key={id} className={view===id?'active':''} onClick={()=>openView(id)}><Icon size={20}/>{label}</button>)}</nav>
     </main>
   );
 }

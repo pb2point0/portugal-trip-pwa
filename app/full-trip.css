@@ -87,3 +87,65 @@
 .map-layer-actions{display:flex;flex-wrap:wrap;gap:7px}
 .map-privacy{margin:0;padding:7px 12px;background:#fffaf0;border-bottom:1px solid var(--line);color:var(--muted);font-size:8px;line-height:1.4}
 @media(max-width:620px){.map-layer-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}.map-layer-actions button{width:auto}}
+
+/* To-do view and overlap-safe refinements */
+.sun-orbit{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0}
+.sun-orbit span{line-height:1;font-variant-numeric:tabular-nums}
+.sun-orbit small{margin-top:5px;line-height:1}
+.countdown-card>strong{overflow-wrap:anywhere}
+.todo-teaser{width:min(100%,860px);margin:0 auto 72px;background:#fff;border:1px solid rgba(15,72,91,.08);border-radius:24px;overflow:hidden;box-shadow:0 12px 38px rgba(7,61,87,.07)}
+.todo-teaser-button{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:17px;border:0;background:transparent;color:var(--ink);padding:23px 24px 18px;text-align:left;cursor:pointer}
+.todo-teaser-icon{width:48px;height:48px;display:grid;place-items:center;border-radius:15px;background:var(--sky2);color:var(--ocean)}
+.todo-teaser-copy{min-width:0;display:block}
+.todo-teaser-copy .kicker{margin-bottom:7px}
+.todo-teaser-copy strong,.todo-teaser-copy small{display:block}
+.todo-teaser-copy strong{font:500 25px/1.1 Georgia,serif;color:var(--deep)}
+.todo-teaser-copy small{margin-top:6px;color:var(--muted);font-size:10px;line-height:1.45}
+.todo-teaser-link{display:flex;align-items:center;gap:5px;color:var(--ocean);font-size:10px;font-weight:900;white-space:nowrap}
+.todo-teaser-meter,.todo-summary-meter{display:block;height:6px;background:#e1ebe7;overflow:hidden}
+.todo-teaser-meter i,.todo-summary-meter i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--ocean),var(--forest))}
+.todo-page{max-width:980px;margin-inline:auto}
+.todo-summary{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:end;margin-bottom:18px;padding:26px 28px;border-radius:23px;background:linear-gradient(145deg,var(--ocean),var(--deep));color:#fff;box-shadow:var(--shadow)}
+.todo-summary span{display:block;color:#b8d6d8;font-size:10px}
+.todo-summary h2{margin:5px 0 0;font:500 30px Georgia,serif}
+.todo-summary>strong{font:500 25px Georgia,serif;color:var(--sand);white-space:nowrap}
+.todo-summary-meter{grid-column:1/-1;background:rgba(255,255,255,.16);border-radius:99px}
+.todo-summary-meter i{background:var(--sand)}
+.todo-table{overflow:hidden;border:1px solid rgba(15,72,91,.08);border-radius:21px;background:#fff;box-shadow:0 10px 32px rgba(7,61,87,.05)}
+.todo-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto auto;gap:15px;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line)}
+.todo-row:last-child{border-bottom:0}
+.todo-row.completed{background:#f7f9f6}
+.todo-row.completed .todo-row-copy{opacity:.58}
+.todo-row-copy{min-width:0}
+.todo-row-copy strong,.todo-row-copy small{display:block;overflow-wrap:anywhere}
+.todo-row-copy strong{font-size:13px}
+.todo-row-copy small{margin-top:5px;color:var(--muted);font-size:10px;line-height:1.45}
+.todo-status{justify-self:start}
+.todo-row-action{min-height:38px;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);border-radius:11px;background:var(--sky2);color:var(--ocean);padding:9px 11px;text-decoration:none;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;white-space:nowrap}
+.booking-detail-placeholder{grid-column:2/-1;display:flex;align-items:flex-start;gap:11px;margin-top:2px;padding:14px;border-radius:13px;background:var(--sand2);color:var(--forest)}
+.booking-detail-placeholder svg{flex:0 0 auto}
+.booking-detail-placeholder strong{font-size:11px;color:var(--ink)}
+.booking-detail-placeholder p{margin:4px 0 0;color:var(--muted);font-size:10px;line-height:1.55}
+.todo-empty{padding:46px 24px;border-radius:21px;background:#fff;text-align:center;color:var(--forest)}
+.todo-empty h2{margin:12px 0 6px;font:500 27px Georgia,serif;color:var(--deep)}
+.todo-empty p{margin:0;color:var(--muted);font-size:11px}
+.map-toolbar a{display:flex;align-items:center;gap:7px;flex:none;border:1px solid var(--line);background:var(--sky2);color:var(--ocean);border-radius:11px;padding:9px 11px;text-decoration:none;font-size:10px;font-weight:800}
+.map-layer-actions{align-items:center}
+@media(max-width:620px){
+  .memory-photo{width:min(78vw,300px);height:250px;margin-inline:auto}
+  .memory-copy{text-align:center}.memory-copy .kicker{justify-content:center}
+  .todo-teaser{margin-bottom:52px;border-radius:20px}
+  .todo-teaser-button{grid-template-columns:auto minmax(0,1fr);gap:13px;padding:18px 17px 14px}
+  .todo-teaser-icon{width:42px;height:42px}
+  .todo-teaser-copy strong{font-size:21px}
+  .todo-teaser-link{grid-column:2}
+  .todo-summary{grid-template-columns:1fr;padding:21px;gap:10px}
+  .todo-summary>strong{font-size:20px}
+  .todo-summary-meter{grid-column:auto}
+  .todo-row{grid-template-columns:28px minmax(0,1fr) auto;gap:10px;padding:16px 13px}
+  .todo-status{grid-column:3;grid-row:1}
+  .todo-row-action{grid-column:2/-1;width:100%}
+  .booking-detail-placeholder{grid-column:1/-1}
+  .map-toolbar a{width:100%;justify-content:center}
+  .map-layer-actions{width:100%;display:grid;grid-template-columns:1fr}
+}

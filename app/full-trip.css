@@ -203,3 +203,5 @@
   .porto-booking-row{grid-template-columns:auto 1fr}.porto-booking-row a{grid-column:2}
   .transport-page,.todo-page{min-width:0}.transport-grid article,.reservation-grid article{min-width:0}
 }
+
+.reservation-detail-stack{display:grid;gap:12px;width:100%}.reservation-detail-card{border:0;background:transparent;padding:0}.reservation-detail-card+.reservation-detail-card{border-top:1px solid rgba(15,72,91,.14);padding-top:12px}

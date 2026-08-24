@@ -82,6 +82,19 @@ function bookingActionFor(item:BookingItem,itinerary:TripPayload['itinerary'],re
   return {kind:'link',label:item.action||'Find options',href:'https://www.google.com/search?q='+encodeURIComponent(item.item+' '+item.choice+' Portugal')};
 }
 
+function ReservationDetails({record}:{record:ReservationRecord}) {
+  return <article className="reservation-detail-card">
+    <strong>{record.title}</strong>
+    <p>{record.startDate}{record.endDate?'–'+record.endDate:''} · {record.location}</p>
+    {record.provider&&<p>Provider: {record.provider}</p>}
+    {record.confirmation&&<p>Confirmation: {record.confirmation}</p>}
+    {record.pin&&<p>PIN: {record.pin}</p>}
+    {record.address&&<p>{record.address}</p>}
+    {record.details?.map((detail)=><p key={detail}>{detail}</p>)}
+    {record.href&&<a href={record.href} target="_blank" rel="noreferrer">Open private details <ExternalLink size={13}/></a>}
+  </article>;
+}
+
 function IconForBase() {
   return <MapPin size={18} />;
 }
@@ -109,6 +122,7 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
   const pageRef = useRef<HTMLDivElement>(null);
   const { itinerary, bookings } = trip;
   const reservations=trip.reservations??[];
+  const flightReservations=reservations.filter((record)=>record.kind==='flight');
   const drives=useMemo(()=>{
     const catalog=new Map(defaultDrives.map((drive)=>[drive.id,drive]));
     (trip.drives??[]).forEach((drive,index)=>catalog.set(drive.id||'private-'+index,drive));
@@ -422,8 +436,8 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
                   ? <button className="todo-row-action" type="button" onClick={()=>openView('transport')}>{action.label}<ChevronRight size={14}/></button>
                   : <button className="todo-row-action" type="button" aria-expanded={detailsOpen} onClick={()=>setExpandedBooking(detailsOpen?null:bookingKey)}>{detailsOpen?'Close':action.label}<ChevronRight size={14}/></button>}
               {detailsOpen&&action.kind==='details'&&<div className="booking-detail-placeholder">
-                {action.reservation?.kind==='flight'?<Plane size={18}/>:action.reservation?.kind==='lodging'?<BedDouble size={18}/>:<CarFront size={18}/>}
-                <div>{action.reservation?<><strong>{action.reservation.title}</strong><p>{action.reservation.startDate}{action.reservation.endDate?'–'+action.reservation.endDate:''} · {action.reservation.location}</p>{action.reservation.provider&&<p>Provider: {action.reservation.provider}</p>}{action.reservation.confirmation&&<p>Confirmation: {action.reservation.confirmation}</p>}{action.reservation.pin&&<p>PIN: {action.reservation.pin}</p>}{action.reservation.address&&<p>{action.reservation.address}</p>}{action.reservation.details?.map((detail)=><p key={detail}>{detail}</p>)}{action.reservation.href&&<a href={action.reservation.href} target="_blank" rel="noreferrer">Open private details <ExternalLink size={13}/></a>}</>:<><strong>Confirmation not connected yet.</strong><p>The trip knows this is booked. Import its confirmation when the file is available.</p></>}</div>
+                {action.reservation?.kind==='flight'||(!action.reservation&&flightReservations.length)?<Plane size={18}/>:action.reservation?.kind==='lodging'?<BedDouble size={18}/>:<CarFront size={18}/>}
+                <div className="reservation-detail-stack">{action.reservation?<ReservationDetails record={action.reservation}/>:flightReservations.length&&/flight/.test((item.item+' '+item.choice).toLowerCase())?flightReservations.map((record)=><ReservationDetails key={record.id} record={record}/>):<article className="reservation-detail-card"><strong>Confirmation not connected yet.</strong><p>The trip knows this is booked. Import its confirmation when the file is available.</p></article>}</div>
               </div>}
             </article>;
           })}</div>:<div className="todo-empty"><ListChecks size={25}/><h2>No to-do items yet.</h2></div>}

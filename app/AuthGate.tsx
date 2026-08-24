@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { KeyRound, LockKeyhole, Mail } from 'lucide-react';
+import { Compass, KeyRound, LockKeyhole, Mail } from 'lucide-react';
 import FullTripApp from './FullTripApp';
 import { getSupabase, isSupabaseConfigured } from './supabase';
 import './auth.css';
@@ -47,7 +47,7 @@ export default function AuthGate() {
 
   return <main className="auth-shell">
     <section className="auth-card">
-      <div className="auth-mark">P</div>
+      <div className="auth-mark" aria-hidden="true"><Compass size={25}/></div>
       <p className="auth-kicker"><LockKeyhole size={13}/> Authorized travelers only</p>
       <h1>Private Portugal<br/><em>trip.</em></h1>
       <p className="auth-lede">Sign in to open the protected itinerary, reservations, routes, and plans.</p>

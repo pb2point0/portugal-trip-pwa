@@ -41,13 +41,14 @@ export default function PortugalAi({ supabase }: { supabase: SupabaseClient }) {
     event?.preventDefault();
     const cleanQuestion=(suggestedQuestion??question).trim();
     if (!cleanQuestion || asking) return;
+    const history=messages.slice(-8).map(({role,content})=>({role,content}));
     const userMessage:ChatMessage={id:messageId(),role:'user',content:cleanQuestion};
     setMessages((current)=>[...current,userMessage]);
     setQuestion('');
     setAsking(true);
     setStatus('');
 
-    const { data, error } = await supabase.functions.invoke<AiResponse>('portugal-ai', {body:{question:cleanQuestion}});
+    const { data, error } = await supabase.functions.invoke<AiResponse>('portugal-ai', {body:{question:cleanQuestion,history}});
     if (error || !data?.answer) setStatus(data?.error || error?.message || 'The assistant could not answer right now.');
     else setMessages((current)=>[...current,{id:messageId(),role:'assistant',content:data.answer!}]);
     setAsking(false);
@@ -66,11 +67,11 @@ export default function PortugalAi({ supabase }: { supabase: SupabaseClient }) {
 
   return <section className="portugal-ai" id="portugal-ai">
     <header className="ai-header">
-      <div className="ai-intro"><span className="ai-mark"><Sparkles size={20}/></span><div><p className="kicker">Trip assistant</p><h2>Ask about the trip.</h2><p>Questions stay together here. Include enough context in each follow-up for now.</p></div></div>
+      <div className="ai-intro"><span className="ai-mark"><Sparkles size={20}/></span><div><p className="kicker">Trip assistant</p><h2>Ask about the trip.</h2><p>Your trip details and recent messages are available in every answer.</p></div></div>
       {messages.length>0&&<button className="ai-reset" type="button" onClick={resetChat}><RotateCcw size={14}/>New chat</button>}
     </header>
     <div className="ai-conversation" aria-live="polite">
-      {messages.length===0&&<div className="ai-empty"><strong>Start with a question.</strong><span>This chat stays in this browser tab. Only the current question is sent; trip data is not added automatically.</span></div>}
+      {messages.length===0&&<div className="ai-empty"><strong>Start with a question.</strong><span>The assistant already knows the saved itinerary, reservations, bookings, and transportation plans.</span></div>}
       {messages.map((item)=><article key={item.id} className={'ai-message '+item.role}><span className="ai-avatar">{item.role==='assistant'?<Sparkles size={15}/>:<UserRound size={15}/>}</span><div><small>{item.role==='assistant'?'Trip assistant':'You'}</small><p>{item.content}</p></div></article>)}
       {asking&&<article className="ai-message assistant typing"><span className="ai-avatar"><Sparkles size={15}/></span><div><small>Trip assistant</small><p><i/><i/><i/></p></div></article>}
       <div ref={endRef}/>

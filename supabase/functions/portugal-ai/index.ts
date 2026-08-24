@@ -53,6 +53,20 @@ function getOutputText(payload: Record<string, unknown>) {
   }).join('\n').trim();
 }
 
+type ChatMessage = { role:'user'|'assistant'; content:string };
+
+function tripContext(payload:unknown) {
+  if (!payload||typeof payload!=='object') return {itinerary:[],bookings:[],reservations:[],drives:[]};
+  const trip=payload as Record<string,unknown>;
+  const rows=(key:string)=>Array.isArray(trip[key])?trip[key] as Record<string,unknown>[]:[];
+  return {
+    itinerary:rows('itinerary').map((day)=>({date:day.date,base:day.base,sleep:day.sleep,plan:day.plan,transport:day.transport,status:day.status,note:day.note})),
+    bookings:rows('bookings').map((item)=>({item:item.item,choice:item.choice,status:item.status,action:item.action,reservationId:item.reservationId})),
+    reservations:rows('reservations').map((item)=>({kind:item.kind,title:item.title,location:item.location,startDate:item.startDate,endDate:item.endDate,status:item.status,provider:item.provider,confirmation:item.confirmation,pin:item.pin,address:item.address,details:item.details,href:item.href})),
+    drives:rows('drives').map((drive)=>({name:drive.name,duration:drive.duration,stops:drive.stops,note:drive.note,weather:drive.weather})),
+  };
+}
+
 Deno.serve(async (request: Request) => {
   const origin = request.headers.get('Origin');
   if (origin && !allowedOrigins.has(origin)) return json({ error: 'Origin not allowed.' }, 403, origin);
@@ -77,9 +91,15 @@ Deno.serve(async (request: Request) => {
   if (!membership) return json({ error: 'This account is not a trip member.' }, 403, origin);
 
   let question = '';
+  let history:ChatMessage[]=[];
   try {
-    const body = await request.json() as { question?: unknown };
-    question = typeof body.question === 'string' ? body.question.trim() : '';
+    const body = await request.json() as { question?:unknown; history?:unknown };
+    question=typeof body.question==='string'?body.question.trim():'';
+    if (Array.isArray(body.history)) history=body.history.filter((item):item is ChatMessage=>{
+      if (!item||typeof item!=='object') return false;
+      const candidate=item as Record<string,unknown>;
+      return (candidate.role==='user'||candidate.role==='assistant')&&typeof candidate.content==='string';
+    }).slice(-8).map((item)=>({role:item.role,content:item.content.slice(0,1200)}));
   } catch {
     return json({ error: 'The question must be valid JSON.' }, 400, origin);
   }
@@ -98,13 +118,18 @@ Deno.serve(async (request: Request) => {
   const { error: usageError } = await supabase.from('ai_requests').insert({ user_id: user.id });
   if (usageError) return json({ error: 'The AI rate limit is not configured yet.' }, 503, origin);
 
+  const {data:tripRow,error:tripError}=await supabase.from('trip_data').select('payload').order('updated_at',{ascending:false}).limit(1).maybeSingle();
+  if (tripError||!tripRow?.payload) return json({error:'Your trip context could not be loaded.'},503,origin);
+  const knownTrip=tripContext(tripRow.payload);
+  const conversationInput=[...history,{role:'user' as const,content:question}];
+
   const openAIResponse = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${openAIKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: Deno.env.get('OPENAI_MODEL') || 'gpt-5.6-luna',
-      instructions: 'You are a concise Portugal travel helper for authorized travelers. Answer only the question supplied; you do not have access to their private itinerary. Never invent confirmation numbers, live availability, opening hours, weather, road status, or trail safety. Clearly say when current information must be verified. Use short ADHD-friendly bullets. For translations, use European Portuguese.',
-      input: question,
+      instructions: 'You are the private Portugal trip assistant for two authorized travelers. Their current itinerary, bookings, reservations, confirmation details, lodging addresses, and drive plans are provided below on every turn. Use that context before asking for dates, places, lodging, transportation, or booking details. Do not ask for information already present. You may provide saved confirmation codes, PINs, seat assignments, and card brand/last four when directly useful, but never request or expose a full payment-card number or security code. Give concrete recommendations tied to their dates and route. Distinguish saved trip facts from live schedules, prices, availability, weather, road status, and trail safety, which must be verified. Use concise, useful bullets and European Portuguese for translations.\n\nKNOWN TRIP CONTEXT:\n'+JSON.stringify(knownTrip),
+      input: conversationInput,
       reasoning: { effort: 'none' },
       text: { verbosity: 'low' },
       max_output_tokens: 600,

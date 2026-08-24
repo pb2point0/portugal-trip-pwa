@@ -1,5 +1,5 @@
-const CACHE = 'private-portugal-shell-v4';
-const CORE = ['/', '/manifest.webmanifest', '/favicon.svg'];
+const CACHE = 'private-portugal-shell-v5';
+const CORE = ['/', '/manifest.webmanifest', '/favicon.svg', '/apple-touch-icon.png', '/icon-192.png', '/icon-512.png'];
 self.addEventListener('install', (event) => event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(CORE))));
 self.addEventListener('activate', (event) => event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))));
 self.addEventListener('fetch', (event) => {

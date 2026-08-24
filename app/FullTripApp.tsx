@@ -2,18 +2,19 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { CalendarDays, CarFront, CircleDollarSign, CloudSun, Copy, Download, ExternalLink, FileSpreadsheet, Heart, House, Languages, LogOut, Luggage, Map, MapPin, Menu, Route, Upload, Volume2, WalletCards, X } from 'lucide-react';
+import { BedDouble, CalendarDays, CarFront, CloudSun, Compass, Copy, ExternalLink, FileSpreadsheet, Heart, House, Languages, LogOut, MapPin, Menu, NotebookText, Route, Search, Upload, Utensils, Volume2, X } from 'lucide-react';
 import { emptyTrip, type BookingItem, type Status, type TripPayload } from './trip-data';
 import PortugalAi from './PortugalAi';
-import { MobilityPanel, WeatherForecast } from './trip-live';
+import { WeatherForecast } from './trip-live';
 import './full-trip.css';
 import './trip-live.css';
 import './private-trip.css';
 import './translator.css';
 
 const RouteMap = dynamic(() => import('./RouteMap'), { ssr: false });
-type View = 'today' | 'itinerary' | 'drives' | 'budget' | 'translate';
+type View = 'today' | 'itinerary' | 'drives' | 'translate';
 
 const phrases = [
   {en:'Hello! Good morning.',pt:'Olá! Bom dia.',group:'Basics'},
@@ -29,7 +30,6 @@ const phrases = [
 ];
 
 const statusClass = (status: string) => status.toLowerCase().replace(/\s+/g, '-');
-const formatMoney = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
 const fmtDate = (date: string) => new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', weekday: 'short', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`));
 const compactDate = (date: string) => new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`));
 const dateInPortugal = () => {
@@ -56,7 +56,7 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
   const [translateText, setTranslateText] = useState('');
   const [direction, setDirection] = useState<'en-pt'|'pt-en'>('en-pt');
   const fileRef = useRef<HTMLInputElement>(null);
-  const { itinerary, bookings, budget, drives } = trip;
+  const { itinerary, bookings, drives } = trip;
 
   useEffect(() => {
     if ('serviceWorker' in navigator) void navigator.serviceWorker.register('/sw.js');
@@ -80,11 +80,9 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
     return () => { cancelled = true; };
   }, [supabase]);
 
-  const remaining = budget.cap - budget.actual;
   const upcomingBookings = bookings.filter((item) => item.status !== 'DONE');
   const completedBookings = bookings.filter((item) => item.status === 'DONE').length;
   const completion = bookings.length ? Math.round(completedBookings / bookings.length * 100) : 0;
-  const budgetProgress = budget.cap > 0 ? Math.min(100, Math.max(0, budget.actual / budget.cap * 100)) : 0;
   const firstDay = itinerary[0];
   const lastDay = itinerary.at(-1);
   const today = dateInPortugal();
@@ -168,14 +166,20 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
     { id:'today' as View, label:'Today', icon:House },
     { id:'itinerary' as View, label:'Trip', icon:CalendarDays },
     ...(drives.length ? [{ id:'drives' as View, label:'Drives', icon:Route }] : []),
-    { id:'budget' as View, label:'Budget', icon:WalletCards },
     { id:'translate' as View, label:'Translate', icon:Languages },
   ];
 
   return (
     <main className="app-shell">
       <header className="site-header">
-        <button className="wordmark" onClick={() => setView('today')} aria-label="Go to trip overview"><span>P</span><div><small>Private trip</small><strong>Portugal</strong></div></button>
+        <button className="wordmark" onClick={() => setView('today')} aria-label="Go to trip overview"><span className="trip-mark" aria-hidden="true">
+  <svg viewBox="0 0 48 48">
+    <circle className="trip-mark-sun" cx="31.5" cy="16.5" r="4.5"/>
+    <path className="trip-mark-ray" d="M31.5 7.5v3M31.5 22.5v3M22.5 16.5h3M37.5 16.5h3"/>
+    <path className="trip-mark-wave" d="M7 27c5-5 10-5 15 0s10 5 19-1"/>
+    <path className="trip-mark-wave trip-mark-wave-soft" d="M7 34c5-4 10-4 15 0s10 4 19-1"/>
+  </svg>
+</span><div><small>Private trip</small><strong>Portugal</strong></div></button>
         <nav className="desktop-nav" aria-label="Primary navigation">
           {nav.map(({id,label}) => <button key={id} className={view===id?'active':''} onClick={() => setView(id)}>{label}</button>)}
         </nav>
@@ -189,7 +193,7 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
 
       <div className="page-wrap">
         {loadingTrip && <section className="empty-trip"><div className="auth-loader"/><h2>Syncing your private trip…</h2></section>}
-        {!loadingTrip && itinerary.length === 0 && <section className="empty-trip"><FileSpreadsheet size={34}/><p className="kicker">Private trip space ready</p><h1>Bring in the workbook.</h1><p>Your itinerary, bookings, and budget will be stored in Supabase and shared only with invited travelers.</p><button className="primary" onClick={() => fileRef.current?.click()}><Upload size={17}/> Import Excel workbook</button><small>{importNote}</small></section>}
+        {!loadingTrip && itinerary.length === 0 && <section className="empty-trip"><FileSpreadsheet size={34}/><p className="kicker">Private trip space ready</p><h1>Bring in the workbook.</h1><p>Your itinerary and booking details will be stored in Supabase and shared only with invited travelers.</p><button className="primary" onClick={() => fileRef.current?.click()}><Upload size={17}/> Import Excel workbook</button><small>{importNote}</small></section>}
         {!loadingTrip && itinerary.length > 0 && <>
         {view === 'today' && <>
           <section className="hero-grid">
@@ -206,18 +210,22 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
               <div className="mini-route">{routeStops.map((stop) => <span key={stop}>{stop}</span>)}</div>
             </aside>
           </section>
+          <section className="editorial-memory" aria-label="A favorite travel memory">
+            <div className="memory-photo"><Image
+              src="/images/eibsee-portrait.jpg"
+              alt="A couple embracing beside the frozen Eibsee lake in winter"
+              width={1067}
+              height={1600}
+              loading="lazy"
+              sizes="(max-width: 620px) 100vw, 360px"
+            /></div>
+            <div className="memory-copy"><p className="kicker">Why we travel</p><h2>A quiet pause between the plans.</h2><p>The itinerary holds the details. The best parts can still happen in the spaces between them.</p></div>
+          </section>
           <section className="overview-grid">
             <article className="now-card">
               <div className="section-label"><CloudSun size={16}/> Trip pulse</div>
               <div className="now-head"><div><span>{upcomingBookings.length} {upcomingBookings.length===1?'thing':'things'} still need attention</span><h2>{completion===100?'Everything important is ready.':'Ready, with room to wander.'}</h2></div><span className="progress-ring" style={{background:`conic-gradient(var(--forest) ${completion}%,var(--sky) 0)`}}><i>{completion}%</i></span></div>
-              <div className="action-list">{upcomingBookings.slice(0,3).map(item=><button key={item.item} onClick={()=>setView('budget')}><span className={`status-dot ${statusClass(item.status)}`}/><div><strong>{item.item}</strong><small>{item.choice}</small></div><span>{item.status}</span></button>)}</div>
-            </article>
-            <article className="budget-snapshot">
-              <div className="section-label"><CircleDollarSign size={16}/> Remaining-trip budget</div>
-              <strong>{formatMoney(remaining)}</strong><span>left of {formatMoney(budget.cap)}</span>
-              <div className="budget-bar"><i style={{width:`${budgetProgress}%`}}/></div>
-              <div className="split"><span><b>{formatMoney(budget.actual)}</b> paid / reported</span><span><b>{formatMoney(budget.cap)}</b> cap</span></div>
-              <button onClick={()=>setView('budget')}>Open budget <ExternalLink size={15}/></button>
+              <div className="action-list">{upcomingBookings.slice(0,3).map(item=><article key={item.item}><span className={`status-dot ${statusClass(item.status)}`}/><div><strong>{item.item}</strong><small>{item.choice}</small></div><span>{item.status}</span></article>)}</div>
             </article>
           </section>
           <WeatherForecast days={previewDays}/>
@@ -229,21 +237,26 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
         </>}
 
         {view === 'itinerary' && <section className="content-page">
-          <div className="page-title"><p className="kicker">{dateRange} · {itinerary.length} days</p><h1>The whole journey.</h1><p>Your protected day-by-day itinerary. Tap any day for transportation and planning notes.</p></div>
+          <div className="page-title"><p className="kicker">{dateRange} · {itinerary.length} days</p><h1>The whole journey.</h1><p>One clear idea for every day: where you are, what the day is for, and the few details worth remembering.</p></div>
           <div className="itinerary-list">{itinerary.map((day,index)=>{
             const open=expandedDay===day.date; const prev=itinerary[index-1]; const newPlace=!prev||prev.base!==day.base;
             return <article key={day.date} className={`day-row ${open?'open':''}`}>
               <button onClick={()=>setExpandedDay(open?null:day.date)} aria-expanded={open}>
-                <div className="timeline"><span>{fmtDate(day.date).split(',')[0]}</span><i className={newPlace?'place':''}/></div>
-                <div className="day-main"><small>{day.sleep} · {day.cost}</small><h2>{day.base}</h2><p>{day.plan}</p></div>
+                <div className="day-number"><span>Day {String(index+1).padStart(2,'0')}</span><strong>{fmtDate(day.date)}</strong></div>
+                <div className="day-main"><div className="day-place"><MapPin size={15}/><span>{newPlace?'Arrive in':'Based in'} {day.base}</span></div><h2>{day.plan}</h2><p>{day.sleep ? `Overnight: ${day.sleep}` : day.base}{day.cost ? ` · ${day.cost}` : ''}</p></div>
                 <span className={`pill ${statusClass(day.status)}`}>{day.status}</span>
               </button>
-              {open&&<div className="day-details"><div><Luggage size={17}/><span><b>Getting there</b>{day.transport}</span></div><div><Map size={17}/><span><b>Keep in mind</b>{day.note}</span></div><MobilityPanel day={day}/></div>}
+              {open&&<div className="day-details">
+                <div className="day-detail-card day-plan-card"><Compass size={19}/><span><b>The shape of the day</b>{day.plan}</span></div>
+                <div className="day-detail-card"><BedDouble size={18}/><span><b>Home base</b>{day.sleep || day.base}</span></div>
+                <div className="day-detail-card"><NotebookText size={18}/><span><b>Worth remembering</b>{day.note || 'No extra planning note for this day.'}</span></div>
+                {day.transport&&<div className="travel-note"><CarFront size={16}/><span><b>Travel note</b>{day.transport}</span></div>}
+              </div>}
             </article>})}</div>
         </section>}
 
         {view === 'drives' && <section className="content-page drives-page">
-          <div className="page-title"><p className="kicker">Flexible route days</p><h1>Drive what the day gives you.</h1><p>Pick by weather and energy—not by date. The map highlights each protected route option; road lines are planning guides, not turn-by-turn navigation.</p></div>
+          <div className="page-title"><p className="kicker">Flexible route days</p><h1>Drive what the day gives you.</h1><p>Pick by weather and energy. Routes now follow mapped roads, and you can reveal ten nearby restaurants without leaving the drive.</p></div>
           <div className="drives-layout">
             <div className="drive-picker">{drives.map(drive=><button key={drive.id} className={selectedDrive?.id===drive.id?'active':''} onClick={()=>setSelectedDriveId(drive.id)}><i style={{background:drive.color}}/><div><small>{drive.priority} · {drive.duration}</small><strong>{drive.name}</strong><span>{drive.vibe}</span></div><b>→</b></button>)}</div>
             {selectedDrive &&
@@ -251,19 +264,14 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
               <RouteMap drive={selectedDrive}/>
               <div className="route-detail"><div><p className="kicker">{selectedDrive.distance} · {selectedDrive.duration}</p><h2>{selectedDrive.name}</h2></div><a href={`https://www.google.com/maps/dir/${selectedDrive.coords.map(([a,b])=>`${a},${b}`).join('/')}`} target="_blank" rel="noreferrer">Open directions <ExternalLink size={15}/></a>
                 <div className="stop-line">{selectedDrive.stops.map((stop,i)=><span key={`${stop}-${i}`}><i style={{borderColor:selectedDrive.color}}/>{stop}</span>)}</div>
-                <div className="route-notes"><p><b>Road note</b>{selectedDrive.note}</p><p><b>Best conditions</b>{selectedDrive.weather}</p></div>
+                <div className="route-notes"><p><b>Why this drive</b>{selectedDrive.note}</p><p><b>Best conditions</b>{selectedDrive.weather}</p></div>
+                <section className="stop-guide"><div className="stop-guide-heading"><div><p className="kicker">Along the way</p><h3>Make the towns part of the drive.</h3></div><span>Open any stop for sights or a restaurant shortlist.</span></div>
+                  <div className="stop-guide-grid">{selectedDrive.stops.map((stop,i)=><article key={`${stop}-guide-${i}`}><span>{String(i+1).padStart(2,'0')}</span><div><h4>{stop}</h4><p>{selectedDrive.stopNotes?.[i] || (i===0?'Your starting point: get oriented, fill up, and set off without rushing.':i===selectedDrive.stops.length-1?'The final stop and natural place to slow down, eat, or linger before heading back.':'A proper pause between stretches of road. Leave room for the center, a viewpoint, and whatever looks good locally.')}</p><div><a href={`https://www.google.com/maps/search/points+of+interest+in+${encodeURIComponent(`${stop}, Portugal`)}`} target="_blank" rel="noreferrer"><Search size={14}/>Explore</a><a href={`https://www.google.com/maps/search/restaurants+in+${encodeURIComponent(`${stop}, Portugal`)}`} target="_blank" rel="noreferrer"><Utensils size={14}/>Restaurants</a></div></div></article>)}</div>
+                </section>
               </div>
             </div>}
           </div>
-          <p className="source-note">Route ideas use official local tourism guidance. Always check official trail and road status the evening before and ignore unsafe GPS shortcuts.</p>
-        </section>}
-
-        {view === 'budget' && <section className="content-page budget-page">
-          <div className="page-title"><p className="kicker">Protected workbook budget</p><h1>Spend with confidence.</h1><p>The cap and actuals below are loaded only after authentication and update whenever you refresh from the workbook.</p></div>
-          <div className="budget-hero"><div><small>Reported spend</small><strong>{formatMoney(budget.actual)}</strong><span>of {formatMoney(budget.cap)} cap</span></div><div className="big-bar"><i style={{width:`${budgetProgress}%`}}/></div><div className="budget-stats"><span><small>Remaining</small><b>{formatMoney(remaining)}</b></span><span><small>Value-plan total</small><b>{formatMoney(budget.valuePlan)}</b></span><span><small>Completed bookings</small><b>{completedBookings} of {bookings.length}</b></span></div></div>
-          <div className="booking-head"><div><p className="kicker">Booking order</p><h2>What’s done—and what’s next.</h2></div><button onClick={()=>fileRef.current?.click()}><Download size={16}/>Import newest workbook</button></div>
-          <div className="booking-table">{bookings.map(item=><article key={item.item}><span className="priority">{String(item.priority).padStart(2,'0')}</span><div><strong>{item.item}</strong><small>{item.choice}</small>{item.href&&<a href={item.href} target="_blank" rel="noreferrer">{item.action} <ExternalLink size={12}/></a>}</div><b>{formatMoney(item.amount)}</b><span className={`pill ${statusClass(item.status)}`}>{item.status}</span></article>)}</div>
-          <div className="privacy-note"><FileSpreadsheet size={24}/><div><strong>Your workbook is processed in this browser.</strong><p>Only the trip data is sent to your protected Supabase table, where row-level security limits access to invited travelers.</p><small>{importNote}</small></div></div>
+          <p className="source-note">Road geometry comes from OpenStreetMap routing and is a planning aid. Check closures and conditions before leaving; restaurant pins are nearby named places, not a rating-based ranking.</p>
         </section>}
 
         {view === 'translate' && <section className="content-page translate-page">

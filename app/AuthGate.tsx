@@ -20,7 +20,11 @@ export default function AuthGate() {
   useEffect(() => {
     if (!supabase) return;
     void supabase.auth.getSession().then(({ data }) => { setSession(data.session); setLoading(false); });
-    const { data } = supabase.auth.onAuthStateChange((_event, next) => { setSession(next); setLoading(false); });
+    const { data } = supabase.auth.onAuthStateChange((_event, next) => {
+      if (!next) localStorage.removeItem('trip-weather-v1');
+      setSession(next);
+      setLoading(false);
+    });
     return () => data.subscription.unsubscribe();
   }, [supabase]);
 
@@ -34,6 +38,7 @@ export default function AuthGate() {
   }
 
   async function signOut() {
+    localStorage.removeItem('trip-weather-v1');
     await supabase?.auth.signOut();
   }
 

@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { CalendarDays, CarFront, CircleDollarSign, CloudSun, Copy, Download, ExternalLink, FileSpreadsheet, Heart, House, Languages, LogOut, Luggage, Map, MapPin, Menu, Route, Upload, Volume2, WalletCards, X } from 'lucide-react';
 import { emptyTrip, type BookingItem, type Status, type TripPayload } from './trip-data';
 import PortugalAi from './PortugalAi';
+import { MobilityPanel, WeatherForecast } from './trip-live';
 import './full-trip.css';
+import './trip-live.css';
 import './private-trip.css';
 import './translator.css';
 
@@ -30,6 +32,11 @@ const statusClass = (status: string) => status.toLowerCase().replace(/\s+/g, '-'
 const formatMoney = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
 const fmtDate = (date: string) => new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', weekday: 'short', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`));
 const compactDate = (date: string) => new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`));
+const dateInPortugal = () => {
+  const parts = new Intl.DateTimeFormat('en-US', { year:'numeric', month:'2-digit', day:'2-digit', timeZone:'Europe/Lisbon' }).formatToParts(new Date());
+  const part = (type:string) => parts.find((item) => item.type === type)?.value ?? '';
+  return `${part('year')}-${part('month')}-${part('day')}`;
+};
 
 function IconForBase() {
   return <MapPin size={18} />;
@@ -48,7 +55,6 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
   const [menuOpen, setMenuOpen] = useState(false);
   const [translateText, setTranslateText] = useState('');
   const [direction, setDirection] = useState<'en-pt'|'pt-en'>('en-pt');
-  const [openedAt] = useState(() => Date.now());
   const fileRef = useRef<HTMLInputElement>(null);
   const { itinerary, bookings, budget, drives } = trip;
 
@@ -81,7 +87,16 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
   const budgetProgress = budget.cap > 0 ? Math.min(100, Math.max(0, budget.actual / budget.cap * 100)) : 0;
   const firstDay = itinerary[0];
   const lastDay = itinerary.at(-1);
-  const daysUntil = firstDay ? Math.max(0, Math.ceil((new Date(`${firstDay.date}T12:00:00Z`).getTime() - openedAt) / 86400000)) : 0;
+  const today = dateInPortugal();
+  const exactDayIndex = itinerary.findIndex((day) => day.date === today);
+  const currentTripDay = exactDayIndex >= 0 ? itinerary[exactDayIndex] : itinerary.find((day) => day.date > today) ?? lastDay;
+  const currentDayIndex = Math.max(0,itinerary.indexOf(currentTripDay!));
+  const tripPhase = firstDay && today < firstDay.date ? 'before' : lastDay && today > lastDay.date ? 'after' : 'during';
+  const daysUntil = firstDay ? Math.max(0, Math.ceil((new Date(`${firstDay.date}T12:00:00Z`).valueOf() - new Date(`${today}T12:00:00Z`).valueOf()) / 86400000)) : 0;
+  const previewStart = tripPhase === 'during' ? currentDayIndex : tripPhase === 'after' ? Math.max(0,itinerary.length-4) : 0;
+  const previewDays = useMemo(() => itinerary.slice(previewStart,previewStart+4), [itinerary,previewStart]);
+  const heroTitle = tripPhase === 'during' ? <>Today in <em>{currentTripDay?.base ?? 'Portugal'}.</em></> : tripPhase === 'after' ? <>Atlantic days.<br/><em>Still ours.</em></> : <>Atlantic days.<br/><em>Just us.</em></>;
+  const heroLede = tripPhase === 'during' ? currentTripDay?.plan : tripPhase === 'after' ? `${itinerary.length} private days of tiled cities, scenic roads, and Atlantic beaches—kept here to revisit.` : `${itinerary.length} private days between tiled cities, scenic roads, and Atlantic beaches.`;
   const dateRange = firstDay && lastDay ? `${compactDate(firstDay.date)}–${compactDate(lastDay.date)}` : 'Private dates';
   const routeStops = Array.from(new Set(itinerary.map((day) => day.base).filter(Boolean))).slice(0, 5);
   const selectedDrive = drives.find((drive) => drive.id === selectedDriveId) ?? drives[0];
@@ -180,13 +195,13 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
           <section className="hero-grid">
             <div className="hero-copy">
               <p className="kicker"><Heart size={13} fill="currentColor"/> Protected trip space</p>
-              <h1>Atlantic days.<br/><em>Just us.</em></h1>
-              <p className="hero-lede">{itinerary.length} private days between tiled cities, scenic roads, and Atlantic beaches.</p>
+              <h1>{heroTitle}</h1>
+              <p className="hero-lede">{heroLede}</p>
               <div className="hero-actions"><button className="primary" onClick={() => setView('itinerary')}>See the full trip <CalendarDays size={17}/></button>{drives.length > 0 && <button className="secondary" onClick={() => setView('drives')}>Choose a drive <CarFront size={17}/></button>}</div>
             </div>
             <aside className="countdown-card">
-              <div className="sun-orbit"><span>{daysUntil}</span><small>days</small></div>
-              <p>until the first trip day</p><strong>{firstDay ? `${compactDate(firstDay.date)} · ${firstDay.base}` : 'Private itinerary'}</strong>
+              <div className="sun-orbit"><span>{tripPhase==='before'?daysUntil:tripPhase==='during'?currentDayIndex+1:itinerary.length}</span><small>{tripPhase==='during'?'day':'days'}</small></div>
+              <p>{tripPhase==='before'?'until the first trip day':tripPhase==='during'?'of this trip':'in this Portugal story'}</p><strong>{tripPhase==='during'&&currentTripDay?`${compactDate(currentTripDay.date)} · ${currentTripDay.base}`:tripPhase==='after'?dateRange:firstDay?`${compactDate(firstDay.date)} · ${firstDay.base}`:'Private itinerary'}</strong>
               <div className="route-dots"><i/><b/><i/><b/><i/></div>
               <div className="mini-route">{routeStops.map((stop) => <span key={stop}>{stop}</span>)}</div>
             </aside>
@@ -194,7 +209,7 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
           <section className="overview-grid">
             <article className="now-card">
               <div className="section-label"><CloudSun size={16}/> Trip pulse</div>
-              <div className="now-head"><div><span>{upcomingBookings.length} things still need attention</span><h2>Ready, with room to wander.</h2></div><span className="progress-ring">{completion}%</span></div>
+              <div className="now-head"><div><span>{upcomingBookings.length} {upcomingBookings.length===1?'thing':'things'} still need attention</span><h2>{completion===100?'Everything important is ready.':'Ready, with room to wander.'}</h2></div><span className="progress-ring" style={{background:`conic-gradient(var(--forest) ${completion}%,var(--sky) 0)`}}><i>{completion}%</i></span></div>
               <div className="action-list">{upcomingBookings.slice(0,3).map(item=><button key={item.item} onClick={()=>setView('budget')}><span className={`status-dot ${statusClass(item.status)}`}/><div><strong>{item.item}</strong><small>{item.choice}</small></div><span>{item.status}</span></button>)}</div>
             </article>
             <article className="budget-snapshot">
@@ -205,10 +220,11 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
               <button onClick={()=>setView('budget')}>Open budget <ExternalLink size={15}/></button>
             </article>
           </section>
+          <WeatherForecast days={previewDays}/>
           <PortugalAi supabase={supabase}/>
           <section className="next-days">
-            <div className="section-heading"><div><p className="kicker">The shape of the trip</p><h2>Your route at a glance.</h2></div><button onClick={()=>setView('itinerary')}>All {itinerary.length} days →</button></div>
-            <div className="day-preview">{itinerary.slice(0,4).map(day=><article key={day.date}><span>{fmtDate(day.date)}</span><IconForBase/><h3>{day.base}</h3><p>{day.plan}</p><small className={`pill ${statusClass(day.status)}`}>{day.status}</small></article>)}</div>
+            <div className="section-heading"><div><p className="kicker">{tripPhase==='after'?'Favorite final chapters':'The days ahead'}</p><h2>{tripPhase==='during'?'From here, gently.':'Your route at a glance.'}</h2></div><button onClick={()=>setView('itinerary')}>All {itinerary.length} days →</button></div>
+            <div className="day-preview">{previewDays.map(day=><article key={day.date}><span>{fmtDate(day.date)}</span><IconForBase/><h3>{day.base}</h3><p>{day.plan}</p><small className={`pill ${statusClass(day.status)}`}>{day.status}</small></article>)}</div>
           </section>
         </>}
 
@@ -222,7 +238,7 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
                 <div className="day-main"><small>{day.sleep} · {day.cost}</small><h2>{day.base}</h2><p>{day.plan}</p></div>
                 <span className={`pill ${statusClass(day.status)}`}>{day.status}</span>
               </button>
-              {open&&<div className="day-details"><div><Luggage size={17}/><span><b>Getting there</b>{day.transport}</span></div><div><Map size={17}/><span><b>Keep in mind</b>{day.note}</span></div></div>}
+              {open&&<div className="day-details"><div><Luggage size={17}/><span><b>Getting there</b>{day.transport}</span></div><div><Map size={17}/><span><b>Keep in mind</b>{day.note}</span></div><MobilityPanel day={day}/></div>}
             </article>})}</div>
         </section>}
 

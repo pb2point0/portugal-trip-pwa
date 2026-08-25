@@ -74,19 +74,19 @@ export default function AuthGate() {
     <section className="auth-card">
       <TripMark className="auth-trip-mark"/>
       <p className="auth-kicker"><LockKeyhole size={13}/> Authorized travelers only</p>
-      <h1>Private Portugal<br/><em>trip.</em></h1>
+      <h1>Our Portugal<br/><em>honeymoon.</em></h1>
       <p className="auth-lede">Sign in to open the itinerary, reservations, routes, and plans.</p>
       {!isSupabaseConfigured ? <div className="auth-setup"><KeyRound size={20}/><div><strong>Supabase setup needed</strong><p>Add the project URL and publishable key to the GitHub repository secrets before deployment.</p></div></div> : <form className="auth-form" autoComplete="on" onSubmit={(event) => void signIn(event)}>
         <label htmlFor="email">Email</label>
         <div><Mail size={18}/><input id="email" name="username" type="text" inputMode="email" autoComplete="username" autoCapitalize="none" spellCheck={false} enterKeyHint="next" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com"/></div>
         <label htmlFor="password">Trip password</label>
-        <div><LockKeyhole size={18}/><input id="password" name="password" type="password" autoComplete="current-password" enterKeyHint="go" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Your private password"/></div>
+        <div><LockKeyhole size={18}/><input id="password" name="password" type="password" autoComplete="current-password" enterKeyHint="go" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Your trip password"/></div>
         <label className="auth-remember"><input type="checkbox" checked={rememberDevice} onChange={(event)=>setRememberDevice(event.target.checked)}/><span>Remember this device</span></label>
-        <button type="submit" disabled={signingIn || !email || !password}>{signingIn ? 'Signing in…' : 'Open private trip'}</button>
+        <button type="submit" disabled={signingIn || !email || !password}>{signingIn ? 'Signing in…' : 'Open our honeymoon'}</button>
         {message&&<p role="status">{message}</p>}
-        <small className="auth-session-note">The login session is stored only for access to this private trip. No advertising or analytics cookies.</small>
+        <small className="auth-session-note">The login session is stored only for access to this protected trip. No advertising or analytics cookies.</small>
       </form>}
-      <small>Private · authenticated access only</small>
+      <small>Honeymoon · invited travelers only</small>
     </section>
   </main>;
 }

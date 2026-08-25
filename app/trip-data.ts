@@ -1,4 +1,4 @@
-export type Status = 'DONE' | 'BOOK NOW' | 'BOOK' | 'PLAN' | 'CHECKOUT';
+export type Status = 'DONE' | 'BOOK';
 
 export type TripDay = { date:string; sleep:string; base:string; plan:string; transport:string; cost:string; status:Status; note:string };
 export type BookingItem = { priority:number; item:string; choice:string; amount:number; status:string; action?:string; href?:string; reservationId?:string };
@@ -22,7 +22,8 @@ export type ReservationRecord = {
 };
 export type BookingUpdate = { matchAny:string[]; status?:string; choice?:string; action?:string; href?:string; reservationId?:string };
 export type PrivateTripBundle = { version:1; reservations:ReservationRecord[]; bookingUpdates?:BookingUpdate[] };
-export type TripPayload = { itinerary:TripDay[]; bookings:BookingItem[]; budget:TripBudget; drives:Drive[]; reservations?:ReservationRecord[] };
+export type PlanComment = { id:string; date:string; author:string; text:string; createdAt:string; committed?:boolean };
+export type TripPayload = { itinerary:TripDay[]; bookings:BookingItem[]; budget:TripBudget; drives:Drive[]; reservations?:ReservationRecord[]; comments?:PlanComment[] };
 
 export const defaultDrives: Drive[] = [
   {id:'northwest',name:'Northwest classic',vibe:'Waterfalls, black sand & ancient forest',duration:'Full day',distance:'~120 km',priority:'Essential',stops:['Ponta do Sol','São Vicente','Seixal','Porto Moniz','Fanal','Ponta do Sol'],note:'Long scenic loop. Use lower gears downhill and skip a stop rather than race daylight.',weather:'Best when Fanal has low cloud; check north-coast webcams.',color:'#0b6b72',coords:[[32.679,-17.105],[32.803,-17.044],[32.811,-17.114],[32.867,-17.167],[32.811,-17.143],[32.679,-17.105]]},
@@ -40,4 +41,5 @@ export const emptyTrip: TripPayload = {
   budget: { cap: 0, actual: 0, valuePlan: 0 },
   drives: [],
   reservations: [],
+  comments: [],
 };

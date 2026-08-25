@@ -1,35 +1,71 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Route, Utensils } from 'lucide-react';
+import { Download, Route, Utensils } from 'lucide-react';
 import type { Drive } from './trip-data';
 import 'leaflet/dist/leaflet.css';
 
 export default function RouteMap({ drive }: { drive:Drive }) {
-  const el = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<import('leaflet').Map | null>(null);
-  const [routeStatus,setRouteStatus] = useState('Finding the road route...');
+  const el=useRef<HTMLDivElement>(null);
+  const mapRef=useRef<import('leaflet').Map|null>(null);
+  const [routeStatus,setRouteStatus]=useState('Finding the road route…');
+  const [offlineReady,setOfflineReady]=useState(false);
   const restaurantSearchUrl='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent('restaurants along '+drive.stops.join(', ')+', Portugal');
 
-  useEffect(() => {
-    const controller = new AbortController();
+  useEffect(()=>{
+    const controller=new AbortController();
     let cancelled=false;
-    async function drawMap() {
-      const L = await import('leaflet');
-      if (cancelled || !el.current) return;
+    let wheelCleanup:(()=>void)|undefined;
+
+    async function drawMap(){
+      const L=await import('leaflet');
+      if(cancelled||!el.current) return;
+
       mapRef.current?.remove();
-      const map=L.map(el.current,{zoomControl:true,scrollWheelZoom:false,attributionControl:true});
+      setOfflineReady(false);
+      const map=L.map(el.current,{
+        zoomControl:true,
+        scrollWheelZoom:true,
+        attributionControl:true,
+        maxBoundsViscosity:.82,
+        worldCopyJump:false,
+      });
       mapRef.current=map;
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+
+      const tiles=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+        minZoom:5,
+        maxZoom:18,
+        attribution:'&copy; OpenStreetMap contributors',
+      }).addTo(map);
+      tiles.once('load',()=>{if(!cancelled)setOfflineReady(true);});
+
       const waypoints=drive.coords.map(([lat,lng])=>L.latLng(lat,lng));
+      const routeBounds=L.latLngBounds(waypoints);
+      map.setMaxBounds(routeBounds.pad(.8));
       waypoints.forEach((point,index)=>{
         const marker=L.circleMarker(point,{radius:index===0?8:6,color:'#fff',weight:3,fillColor:drive.color,fillOpacity:1}).addTo(map);
         const label=document.createElement('span');
         label.textContent=drive.stops[index]??'Stop '+(index+1);
         marker.bindTooltip(label,{direction:'top'});
       });
-      map.fitBounds(L.latLngBounds(waypoints),{padding:[32,32],maxZoom:12});
-      setRouteStatus('Finding the road route...');
+      map.fitBounds(routeBounds,{padding:[32,32],maxZoom:12});
+      map.setMinZoom(Math.max(5,map.getZoom()-1));
+
+      const mapElement=el.current;
+      const handOffAtZoomEdge=(event:WheelEvent)=>{
+        const atLowerEdge=event.deltaY>0&&map.getZoom()<=map.getMinZoom();
+        const atUpperEdge=event.deltaY<0&&map.getZoom()>=map.getMaxZoom();
+        if(atLowerEdge||atUpperEdge){
+          map.scrollWheelZoom.disable();
+          window.setTimeout(()=>{if(!cancelled)map.scrollWheelZoom.enable();},180);
+        } else if(!map.scrollWheelZoom.enabled()) {
+          map.scrollWheelZoom.enable();
+        }
+      };
+      mapElement.addEventListener('wheel',handOffAtZoomEdge,{capture:true,passive:true});
+      wheelCleanup=()=>mapElement.removeEventListener('wheel',handOffAtZoomEdge,{capture:true});
+
+      setRouteStatus('Finding the road route…');
       try {
         const coordinates=drive.coords.map(([lat,lng])=>lng+','+lat).join(';');
         const response=await fetch('https://router.project-osrm.org/route/v1/driving/'+coordinates+'?overview=full&geometries=geojson&steps=false',{signal:controller.signal});
@@ -41,22 +77,32 @@ export default function RouteMap({ drive }: { drive:Drive }) {
         const routePoints=routed.map(([lng,lat])=>L.latLng(lat,lng));
         L.polyline(routePoints,{color:'#fff',weight:9,opacity:.9,lineCap:'round',lineJoin:'round'}).addTo(map);
         L.polyline(routePoints,{color:drive.color,weight:5,opacity:.95,lineCap:'round',lineJoin:'round'}).addTo(map);
-        map.fitBounds(L.latLngBounds(routePoints),{padding:[32,32],maxZoom:12});
-        setRouteStatus('Following mapped roads');
+        const routedBounds=L.latLngBounds(routePoints);
+        map.setMaxBounds(routedBounds.pad(.65));
+        map.fitBounds(routedBounds,{padding:[32,32],maxZoom:12});
+        map.setMinZoom(Math.max(5,map.getZoom()-1));
+        setRouteStatus('Road route ready');
       } catch {
-        if(!controller.signal.aborted) setRouteStatus('Road route unavailable — use Open directions below');
+        if(!controller.signal.aborted)setRouteStatus('Saved waypoints ready · live road line unavailable');
       }
     }
+
     void drawMap();
-    return ()=>{cancelled=true;controller.abort();mapRef.current?.remove();mapRef.current=null;};
+    return ()=>{
+      cancelled=true;
+      controller.abort();
+      wheelCleanup?.();
+      mapRef.current?.remove();
+      mapRef.current=null;
+    };
   },[drive]);
 
   return <div className="route-map-shell">
     <div className="map-toolbar" aria-label="Drive map tools">
       <span aria-live="polite"><Route size={14}/>{routeStatus}</span>
-      <div className="map-layer-actions"><a className="map-external-link" href={restaurantSearchUrl} target="_blank" rel="noreferrer" aria-label={'Find restaurants along '+drive.name+' in Google Maps'}><Utensils size={15}/>Restaurants along this drive</a></div>
+      <span className={'offline-map-state '+(offlineReady?'ready':'')}><Download size={14}/>{offlineReady?'Viewed area saved offline':'Saving viewed area…'}</span>
+      <div className="map-layer-actions"><a className="map-external-link" href={restaurantSearchUrl} aria-label={'Find restaurants along '+drive.name+' in Google Maps'}><Utensils size={15}/>Restaurants along this drive</a></div>
     </div>
-    <p className="map-privacy">Roads load automatically through OpenStreetMap’s public routing service. The route waypoints are sent to that service.</p>
-    <div ref={el} className="route-map" aria-label={'Road map for '+drive.name} aria-busy={routeStatus==='Finding the road route...'}/>
+    <div ref={el} className="route-map" aria-label={'Road map for '+drive.name} aria-busy={routeStatus==='Finding the road route…'}/>
   </div>;
 }

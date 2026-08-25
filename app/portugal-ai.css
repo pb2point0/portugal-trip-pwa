@@ -14,3 +14,14 @@
 .ai-composer{display:grid;grid-template-columns:minmax(0,1fr) 42px;gap:9px;align-items:end;margin-top:14px;padding:8px;border:1px solid var(--line);border-radius:17px;background:#fff}.ai-composer:focus-within{border-color:var(--forest);box-shadow:0 0 0 3px rgba(44,101,82,.1)}.ai-composer textarea{width:100%;min-height:44px;max-height:150px;resize:vertical;border:0;background:transparent;padding:9px;color:var(--ink);font:400 13px/1.5 Arial,Helvetica,sans-serif;outline:none}.ai-composer button{width:42px;height:42px;border:0;border-radius:13px;background:var(--ocean);color:#fff;display:grid;place-items:center;cursor:pointer}.ai-composer button:disabled{opacity:.35;cursor:not-allowed}
 .ai-meta{display:flex;justify-content:space-between;gap:14px;margin-top:7px;color:var(--muted);font-size:8px;line-height:1.4}.ai-status{margin:12px 0 0;color:var(--coral);font-size:10px}
 @media(max-width:620px){.portugal-ai{padding:18px;border-radius:21px}.ai-header{display:block}.ai-reset{margin:12px 0 0 auto}.ai-intro h2{font-size:25px}.ai-conversation{max-height:430px;padding:13px}.ai-message{max-width:94%}.ai-prompts{display:grid}.ai-prompts button{text-align:left}.ai-meta{display:grid;gap:3px}.ai-composer{grid-template-columns:minmax(0,1fr) 42px}}
+
+
+/* Keep the follow-up composer visible and make the empty state the chat box itself */
+.portugal-ai{display:grid;scroll-margin-top:16px;background:linear-gradient(145deg,#fff 0%,#eef7f5 100%)}
+.ai-conversation{max-height:min(44svh,430px)}
+.ai-composer{position:sticky;bottom:0;z-index:3;box-shadow:0 10px 28px rgba(7,61,87,.08)}
+@media(max-width:620px){
+  .portugal-ai{padding:18px}
+  .ai-conversation{max-height:36svh}
+  .ai-composer{margin-top:12px}
+}

@@ -4,9 +4,9 @@ export const dynamic = 'force-static';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Private Portugal Trip',
-    short_name: 'Portugal Trip',
-    description: 'Authenticated trip companion.',
+    name: 'Our Portugal Honeymoon',
+    short_name: 'Honeymoon',
+    description: 'Our shared Portugal honeymoon companion.',
     start_url: '/',
     display: 'standalone',
     background_color: '#f6f7f2',

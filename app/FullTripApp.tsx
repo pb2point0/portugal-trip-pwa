@@ -151,7 +151,10 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
   const drives=trip.drives??[];
 
   useEffect(() => {
-    if ('serviceWorker' in navigator) void navigator.serviceWorker.register('/sw.js');
+    if ('serviceWorker' in navigator) {
+      void navigator.serviceWorker.register('/sw.js');
+      navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+    }
     let cancelled = false;
     async function loadTrip() {
       const { data, error } = await supabase.from('trip_data').select('trip_id, payload, updated_at').order('updated_at', { ascending:false }).limit(1).maybeSingle();

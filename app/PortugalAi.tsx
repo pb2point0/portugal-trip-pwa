@@ -2,11 +2,50 @@
 
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { RotateCcw, Send, Sparkles, UserRound } from 'lucide-react';
+import { RotateCcw, Send } from 'lucide-react';
 import './portugal-ai.css';
 
-function quickQuestions(base:string){
+type TripPhase='before'|'during'|'after';
+
+const suggestionBanks: Record<string,(place:string)=>string[]> = {
+  porto:(place)=>[
+    `What is worth doing near ${place} if we have two relaxed hours?`,
+    `Give us a rainy-day backup around ${place}.`,
+    `Best cellar or tasting near ${place} tonight?`,
+  ],
+  funchal:(place)=>[
+    `What is worth doing near ${place} if we have two relaxed hours?`,
+    `Give us a rainy-day backup around ${place}.`,
+    `Where should we eat seafood near ${place}?`,
+  ],
+  'ponta do sol':(place)=>[
+    `What's a good slow morning near ${place}?`,
+    `Give us a rainy-day backup around ${place}.`,
+    `Best sunset spot near ${place} tonight?`,
+  ],
+  setúbal:()=>[
+    'What is worth doing near Setúbal if we have two relaxed hours?',
+    'Give us a rainy-day backup around Setúbal.',
+    'Quick local food recommendation near Setúbal?',
+  ],
+};
+const beforeTripQuestions=[
+  'What should we pack for this time of year in Portugal?',
+  'Any must-book restaurants before we land?',
+  'What’s the fastest way from the airport to our first stop?',
+];
+const afterTripQuestions=[
+  'Recap: what were the trip’s highlights?',
+  'What should we remember for next time?',
+  'Any lingering to-dos from the trip?',
+];
+
+function quickQuestions(base:string,tripPhase:TripPhase){
   const place=base.trim()||'Portugal';
+  if (tripPhase==='before') return beforeTripQuestions;
+  if (tripPhase==='after') return afterTripQuestions;
+  const bank=Object.entries(suggestionBanks).find(([key])=>place.toLowerCase().includes(key));
+  if (bank) return bank[1](place);
   return [
     `What is worth doing near ${place} if we have two relaxed hours?`,
     `Give us a rainy-day backup around ${place}.`,
@@ -19,13 +58,13 @@ type ChatMessage={id:string;role:'user'|'assistant';content:string};
 type AiResponse={answer?:string;error?:string};
 const messageId=()=>typeof crypto!=='undefined'&&'randomUUID' in crypto?crypto.randomUUID():Date.now()+'-'+Math.random();
 
-export default function PortugalAi({supabase,base}:{supabase:SupabaseClient;base:string}){
+export default function PortugalAi({supabase,base,tripPhase}:{supabase:SupabaseClient;base:string;tripPhase:TripPhase}){
   const [question,setQuestion]=useState('');
   const [messages,setMessages]=useState<ChatMessage[]>([]);
   const [status,setStatus]=useState('');
   const [asking,setAsking]=useState(false);
   const endRef=useRef<HTMLDivElement>(null);
-  const suggestions=quickQuestions(base);
+  const suggestions=quickQuestions(base,tripPhase);
 
   useEffect(()=>{
     try{
@@ -71,15 +110,15 @@ export default function PortugalAi({supabase,base}:{supabase:SupabaseClient;base
 
   return <section className="portugal-ai" id="portugal-ai">
     <header className="ai-header">
-      <div className="ai-intro"><span className="ai-mark"><Sparkles size={20}/></span><div><p className="kicker">Honeymoon copilot · now near {base}</p><h2>Ask while the idea is fresh.</h2><p>The saved trip helps answer only after one of you chooses to send a question.</p></div></div>
+      <p className="kicker">Honeymoon copilot</p>
       {messages.length>0&&<button className="ai-reset" type="button" onClick={resetChat}><RotateCcw size={14}/>New chat</button>}
     </header>
 
     {messages.length===0&&<div className="ai-prompts" aria-label={'Suggested questions for '+base}>{suggestions.map((prompt)=><button key={prompt} type="button" onClick={()=>void ask(undefined,prompt)}>{prompt}</button>)}</div>}
 
     {messages.length>0&&<div className="ai-conversation" aria-live="polite">
-      {messages.map((item)=><article key={item.id} className={'ai-message '+item.role}><span className="ai-avatar">{item.role==='assistant'?<Sparkles size={15}/>:<UserRound size={15}/>}</span><div><small>{item.role==='assistant'?'Trip assistant':'You'}</small><p>{item.content}</p></div></article>)}
-      {asking&&<article className="ai-message assistant typing"><span className="ai-avatar"><Sparkles size={15}/></span><div><small>Trip assistant</small><p><i/><i/><i/></p></div></article>}
+      {messages.map((item)=><article key={item.id} className={'ai-message '+item.role}><small>{item.role==='assistant'?'Trip assistant':'You'}</small><p>{item.content}</p></article>)}
+      {asking&&<article className="ai-message assistant typing"><small>Trip assistant</small><p><i/><i/><i/></p></article>}
       <div ref={endRef}/>
     </div>}
 

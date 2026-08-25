@@ -1,4 +1,4 @@
-const SHELL_CACHE='honeymoon-portugal-shell-v6';
+const SHELL_CACHE='honeymoon-portugal-shell-v7';
 const MAP_CACHE='honeymoon-portugal-viewed-maps-v1';
 const CORE=['/','/manifest.webmanifest','/favicon.svg','/apple-touch-icon.png','/icon-192.png','/icon-512.png'];
 self.addEventListener('install',(event)=>event.waitUntil(caches.open(SHELL_CACHE).then((cache)=>cache.addAll(CORE))));

@@ -1,16 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Download, Route, Utensils } from 'lucide-react';
 import type { Drive } from './trip-data';
 import 'leaflet/dist/leaflet.css';
 
 export default function RouteMap({ drive }: { drive:Drive }) {
   const el=useRef<HTMLDivElement>(null);
   const mapRef=useRef<import('leaflet').Map|null>(null);
-  const [routeStatus,setRouteStatus]=useState('Finding the road route…');
-  const [offlineReady,setOfflineReady]=useState(false);
-  const restaurantSearchUrl='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent('restaurants along '+drive.stops.join(', ')+', Portugal');
+  const [loading,setLoading]=useState(true);
 
   useEffect(()=>{
     const controller=new AbortController();
@@ -22,7 +19,6 @@ export default function RouteMap({ drive }: { drive:Drive }) {
       if(cancelled||!el.current) return;
 
       mapRef.current?.remove();
-      setOfflineReady(false);
       const map=L.map(el.current,{
         zoomControl:true,
         scrollWheelZoom:true,
@@ -32,12 +28,11 @@ export default function RouteMap({ drive }: { drive:Drive }) {
       });
       mapRef.current=map;
 
-      const tiles=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
         minZoom:5,
         maxZoom:18,
         attribution:'&copy; OpenStreetMap contributors',
       }).addTo(map);
-      tiles.once('load',()=>{if(!cancelled)setOfflineReady(true);});
 
       const waypoints=drive.coords.map(([lat,lng])=>L.latLng(lat,lng));
       const routeBounds=L.latLngBounds(waypoints);
@@ -65,7 +60,6 @@ export default function RouteMap({ drive }: { drive:Drive }) {
       mapElement.addEventListener('wheel',handOffAtZoomEdge,{capture:true,passive:true});
       wheelCleanup=()=>mapElement.removeEventListener('wheel',handOffAtZoomEdge,{capture:true});
 
-      setRouteStatus('Finding the road route…');
       try {
         const coordinates=drive.coords.map(([lat,lng])=>lng+','+lat).join(';');
         const response=await fetch('https://router.project-osrm.org/route/v1/driving/'+coordinates+'?overview=full&geometries=geojson&steps=false',{signal:controller.signal});
@@ -81,9 +75,10 @@ export default function RouteMap({ drive }: { drive:Drive }) {
         map.setMaxBounds(routedBounds.pad(.65));
         map.fitBounds(routedBounds,{padding:[32,32],maxZoom:12});
         map.setMinZoom(Math.max(5,map.getZoom()-1));
-        setRouteStatus('Road route ready');
       } catch {
-        if(!controller.signal.aborted)setRouteStatus('Saved waypoints ready · live road line unavailable');
+        // Waypoint markers alone still give a usable map if live road routing fails.
+      } finally {
+        if(!cancelled)setLoading(false);
       }
     }
 
@@ -98,11 +93,6 @@ export default function RouteMap({ drive }: { drive:Drive }) {
   },[drive]);
 
   return <div className="route-map-shell">
-    <div className="map-toolbar" aria-label="Drive map tools">
-      <span aria-live="polite"><Route size={14}/>{routeStatus}</span>
-      <span className={'offline-map-state '+(offlineReady?'ready':'')}><Download size={14}/>{offlineReady?'Viewed area saved offline':'Saving viewed area…'}</span>
-      <div className="map-layer-actions"><a className="map-external-link" href={restaurantSearchUrl} aria-label={'Find restaurants along '+drive.name+' in Google Maps'}><Utensils size={15}/>Restaurants along this drive</a></div>
-    </div>
-    <div ref={el} className="route-map" aria-label={'Road map for '+drive.name} aria-busy={routeStatus==='Finding the road route…'}/>
+    <div ref={el} className="route-map" aria-label={'Road map for '+drive.name} aria-busy={loading}/>
   </div>;
 }

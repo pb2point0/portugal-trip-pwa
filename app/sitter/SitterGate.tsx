@@ -47,14 +47,8 @@ export default function SitterGate() {
     setVerifying(false);
   }
 
-  function lock() {
-    window.sessionStorage.removeItem(storageKey);
-    setUnlocked(null);
-    setPassphrase('');
-  }
-
   if (checking) return <main className="auth-shell"><div className="auth-loader" aria-label="Loading" /></main>;
-  if (unlocked && supabase) return <SitterApp supabase={supabase} passphrase={unlocked} onLock={lock} />;
+  if (unlocked && supabase) return <SitterApp supabase={supabase} passphrase={unlocked} />;
 
   return <main className="auth-shell">
     <section className="auth-card">

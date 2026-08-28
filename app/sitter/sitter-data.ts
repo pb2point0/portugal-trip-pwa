@@ -4,11 +4,11 @@ export const tripWindow = { label: 'Aug 29 to Sep 14, 2026' };
 
 export const welcome = [
   'Thank you for doing this. It means we can actually relax.',
-  'Jeremy, glad you will be around too. Everything here goes for you as well.',
+  'Jeremy, good to have you around too. Make yourself at home.',
   'Portugal is 5 hours ahead. Call anyway if something is wrong.',
 ];
 
-export type QuickRefRow = { label: string; value: string };
+export type QuickRefRow = { label: string; value: string; blank?: boolean };
 export const quickReference: QuickRefRow[] = [
   { label: 'Bengt AM', value: '**1.5 cups** + powder + spoonful of sardines' },
   { label: 'Bengt PM', value: '**1.5 cups** + spoonful of sardines' },
@@ -18,7 +18,7 @@ export const quickReference: QuickRefRow[] = [
   { label: 'Trash', value: 'Out **Thursday evening**.' },
   { label: 'Daycare', value: 'Playtime Pet Resort, 215-910-4991' },
   { label: 'Closest help', value: 'Ruth next door, 484-888-6733' },
-  { label: 'Wifi', value: '' },
+  { label: 'Wifi', value: '', blank: true },
 ];
 
 export type Section = { id: string; title: string; lines: string[] };
@@ -58,34 +58,36 @@ export const homeSections: Section[] = [
 ];
 
 export type Bowl = { dog: string; amount: string; adds: string[] };
-export type Meal = { id: string; label: string; when: string; before: string[]; bowls: Bowl[]; after: string[] };
+export type Meal = { id: string; tone: 'am' | 'mid' | 'pm'; label: string; before: string[]; bowls: Bowl[]; after: string[] };
 
 export const feedingNote = 'Bengt gets **3 cups a day**, split 1.5 in the morning and 1.5 at night. That is the right amount for his 40 pounds.';
 
 export const meals: Meal[] = [
   {
     id: 'am',
+    tone: 'am',
     label: 'Morning',
-    when: 'First thing',
-    before: ['Bengt straight out to potty.'],
+    before: ['Bengt will need to pee right away.'],
     bowls: [
       { dog: 'Chloe', amount: '1 cup', adds: ['nutrition powder', '2 crushed allergy pills', 'spoonful of sardines'] },
       { dog: 'Bengt', amount: '1.5 cups', adds: ['nutrition powder', 'spoonful of sardines'] },
     ],
-    after: ['Walk after. Usually both poop and pee.'],
+    after: ['They both usually poop and pee on the walk after eating. Bengt sometimes goes before.'],
   },
   {
-    id: 'afternoon',
-    label: 'Afternoon',
-    when: 'Midday',
+    id: 'mid',
+    tone: 'mid',
+    label: 'Midday',
     before: ['Walk and pee.'],
     bowls: [],
-    after: ['No meal. The rest of his food comes at dinner.'],
+    after: [
+      'Treats are great for both of them around now. The frozen ones in the freezer go inside the blue, green, and larger pink balls, and they will snack on those for a good while. Nice to hand out after a lunchtime potty trip.',
+    ],
   },
   {
     id: 'pm',
+    tone: 'pm',
     label: 'Evening',
-    when: 'Dinner',
     before: [],
     bowls: [
       { dog: 'Chloe', amount: '1 cup', adds: ['spoonful of sardines'] },
@@ -95,14 +97,25 @@ export const meals: Meal[] = [
   },
 ];
 
+export const feedingExtras: Section[] = [
+  {
+    id: 'snuffle',
+    title: 'Snuffle mat',
+    lines: [
+      'Great at any time for either of them.',
+      'Feel free to feed Bengt his whole breakfast out of it. Sardines on the side.',
+    ],
+  },
+];
+
 export const walkSections: Section[] = [
   {
     id: 'walking',
     title: 'Walking',
     lines: [
       'You have walked both of them with Patrik, so you know the routine.',
-      '**If either of them pulls,** stop walking completely and give a little slack back. If they pull again, stop again. Once the leash is slack and they are not pulling, start walking.',
-      'Chloe pulls mainly when she spots a friend. Bengt walks well, though he is still a puppy.',
+      'Chloe pulls a fair amount in general, and Bengt has his moments.',
+      '**When either of them pulls,** stop walking completely and give a little slack back. If they pull again, stop again. Once the leash is slack and they are not pulling, start walking. This has been working well with both of them over the last month.',
       'Together or separately, whatever is easier.',
     ],
   },
@@ -137,7 +150,7 @@ export const crateSections: Section[] = [
   },
 ];
 
-export type Contact = { name: string; note: string; phone: string };
+export type Contact = { name: string; note: string; phone: string; address?: string };
 export type ContactGroup = { id: string; title: string; contacts: Contact[] };
 
 export const contactGroups: ContactGroup[] = [
@@ -153,7 +166,12 @@ export const contactGroups: ContactGroup[] = [
     title: 'Vets',
     contacts: [
       { name: 'Ruth', note: 'Also a neighbor, and a vet. This is a different Ruth.', phone: '610-400-9235' },
-      { name: 'East Bradford Veterinary', note: 'Our regular practice.', phone: '' },
+      {
+        name: 'East Bradford Veterinary Hospital',
+        note: 'Our regular practice.',
+        phone: '(610) 241-3390',
+        address: '712 W Nields St, West Chester, PA 19382',
+      },
     ],
   },
   {
@@ -168,10 +186,17 @@ export const contactGroups: ContactGroup[] = [
     id: 'backup',
     title: 'If you have to leave',
     contacts: [
-      { name: 'Sweta', note: 'If you cannot finish the stay, she will take them.', phone: '215-206-8041' },
+      { name: 'Sweta', note: 'If you cannot finish the stay.', phone: '215-206-8041' },
       { name: 'Will', note: "Sweta's husband.", phone: '615-438-3585' },
     ],
   },
 ];
+
+export const daycare: Contact = {
+  name: 'Playtime Pet Resort',
+  note: 'Daycare twice a week. 7 AM to 8 PM weekdays.',
+  phone: '215-910-4991',
+  address: '989 E Lancaster Ave, Downingtown, PA 19335',
+};
 
 export const contactsFooter = 'You have our numbers. WhatsApp is the best way to reach us. It works over wifi with no international charges either direction.';

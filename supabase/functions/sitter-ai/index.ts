@@ -14,24 +14,27 @@ Patrik and Megan are in Portugal. Portugal is 5 hours ahead of Pennsylvania, so 
 FEEDING
 Bengt gets 3 cups a day total, split 1.5 cups in the morning and 1.5 cups at night. That is the right amount for his 40 pounds. Chloe gets 2 cups a day, 1 cup in the morning and 1 cup at night.
 
-Morning, first thing:
-- Take Bengt straight out to potty.
+Morning:
+- Bengt will need to pee right away.
 - Chloe's bowl: 1 cup + nutrition powder + 2 crushed allergy pills + a spoonful of sardines.
 - Bengt's bowl: 1.5 cups + nutrition powder + a spoonful of sardines.
-- Walk them after. Usually both poop and pee.
+- They both usually poop and pee on the walk after eating. Bengt sometimes goes before.
 
-Afternoon, midday:
+Midday:
 - Walk and pee.
-- No meal. The rest of Bengt's food comes at dinner.
+- No meal, but treats are great for both of them around now. The frozen treats in the freezer go inside the blue, green, and larger pink balls, and they will snack on those for a good while. Nice after a lunchtime potty trip.
 
-Evening, dinner:
+Evening:
 - Chloe's bowl: 1 cup + a spoonful of sardines.
 - Bengt's bowl: 1.5 cups + a spoonful of sardines.
 
 Only Chloe gets the allergy pills, two of them, crushed, in her morning bowl only. Bengt never gets one. The nutrition powder goes in both morning bowls only, not at dinner. Sardines go in every meal for both dogs.
 
+SNUFFLE MAT
+Great at any time for either dog. It is fine to feed Bengt his whole breakfast out of the snuffle mat, with the sardines on the side.
+
 WALKS
-Flynn has already walked both dogs with Patrik. If either dog pulls, stop walking completely and give a little slack back on the leash. If they pull again, stop again. Once the leash is slack and they are not pulling, start walking again. Chloe pulls mainly when she spots one of her dog friends. Bengt walks well, though he is still a puppy. Walking them together or separately is fine, whatever is easier.
+Flynn has already walked both dogs with Patrik. Chloe pulls a fair amount in general, and Bengt has his moments. When either dog pulls, stop walking completely and give a little slack back on the leash. If they pull again, stop again. Once the leash is slack and they are not pulling, start walking again. This has been working well with both dogs over the last month. Walking them together or separately is fine, whatever is easier.
 
 TRAINING AND TREATS
 Training is highly encouraged and they both like it. They know these commands: touch, sit, stay, place, here, back up, stop. Treats are in the usual spot.
@@ -61,13 +64,15 @@ Closest by:
 - Ruth, next door, always home: 484-888-6733. Good first call for anything quick.
 Vets:
 - Ruth, also a neighbor, and a vet. This is a DIFFERENT Ruth from the one next door: 610-400-9235.
-- East Bradford Veterinary, their regular practice: [phone not written in yet. Tell her to ask Patrik.]
+- East Bradford Veterinary Hospital, their regular practice: (610) 241-3390, 712 W Nields St, West Chester, PA 19382.
 General help:
 - Jenn, Bubba's mom. Bubba is Chloe's scraggly-haired friend and Flynn has met him: 484-639-1322.
 - Marigold, neighbor: 610-329-7502.
 If Flynn has to leave or cannot finish the stay:
-- Sweta will take the dogs: 215-206-8041.
+- Sweta: 215-206-8041.
 - Will, Sweta's husband: 615-438-3585.
+Daycare:
+- Playtime Pet Resort: 215-910-4991, 989 E Lancaster Ave, Downingtown, PA 19335. Open 7:00 AM to 8:00 PM weekdays.
 `.trim();
 
 function corsHeaders(origin: string | null) {
@@ -174,11 +179,12 @@ Deno.serve(async (request: Request) => {
     headers: { 'Authorization': `Bearer ${openAIKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: Deno.env.get('OPENAI_MODEL') || 'gpt-5.6-luna',
-      instructions: 'You are a helper for Flynn, who is house and dog sitting for Chloe (adult dog) and Bengt (puppy) while Patrik and Megan are in Portugal. Her boyfriend Jeremy is around sometimes and may also be the one asking. Answer only from the guide below. Keep the tone warm but plain: short sentences, no filler, no catchphrases, and never use em dashes. She is reading this on a phone, often while handling a dog, so lead with the answer. If the guide does not cover something, say so and tell her to call or WhatsApp Patrik or Megan rather than guessing. Two things are not filled in yet, the wifi password and East Bradford Veterinary\'s phone number. If asked about either, say Patrik has not written it in yet and she should ask him. Never invent a phone number. Be careful about the two Ruths: one is the next door neighbor who is always home, the other is a neighbor who is a vet. Always say which one you mean. You are not a medical professional. For anything that sounds like a real emergency, tell her to call a vet right away.\n\nGUIDE:\n' + guideContext,
+      instructions: 'You are a helper for Flynn, who is house and dog sitting for Chloe (adult dog) and Bengt (puppy) while Patrik and Megan are in Portugal. Her boyfriend Jeremy is around sometimes and may also be the one asking. The guide below is the authority on anything about these two dogs and this house, so always prefer it. If the guide does not cover the question, answer from your own knowledge, and use web search when current or local information would help. Make it clear when an answer comes from outside the guide rather than from Patrik and Megan. Keep the tone warm but plain: short sentences, no filler, no catchphrases, and never use em dashes. She is reading this on a phone, often while handling a dog, so lead with the answer. The wifi password is not in the guide, so if she asks, tell her Patrik is writing it in and she should ask him. Never invent a phone number. Be careful about the two Ruths: one is the next door neighbor who is always home, the other is a neighbor who is a vet. Always say which one you mean. You are not a veterinarian. For anything that sounds like a real emergency, tell her to call a vet right away before anything else.\n\nGUIDE:\n' + guideContext,
       input: conversationInput,
+      tools: [{ type: 'web_search' }],
       reasoning: { effort: 'none' },
       text: { verbosity: 'low' },
-      max_output_tokens: 500,
+      max_output_tokens: 900,
       store: false,
     }),
   });

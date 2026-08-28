@@ -1,4 +1,8 @@
 import type { Metadata, Viewport } from 'next';
+import { Fraunces, Inter } from 'next/font/google';
+
+const display = Fraunces({ subsets: ['latin'], variable: '--sitter-display', display: 'swap' });
+const body = Inter({ subsets: ['latin'], variable: '--sitter-body', display: 'swap' });
 
 export const metadata: Metadata = {
   title: 'Sitter Guide',
@@ -23,5 +27,5 @@ export const viewport: Viewport = {
 };
 
 export default function SitterLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return children;
+  return <div className={`${display.variable} ${body.variable}`}>{children}</div>;
 }

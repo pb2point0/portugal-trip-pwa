@@ -3,13 +3,8 @@
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { RotateCcw, Send } from 'lucide-react';
+import { rich } from './rich';
 import '../portugal-ai.css';
-
-const suggestions = [
-  'How much does Bengt eat and when does he get his allergy pill?',
-  'Bengt has been crying in the crate for a few minutes, what do I do?',
-  'How long can I leave them alone?',
-];
 
 const chatStorageKey = 'sitter-ai-chat-v1';
 type ChatMessage = { id: string; role: 'user' | 'assistant'; content: string };
@@ -70,24 +65,24 @@ export default function SitterAi({ supabase, passphrase }: { supabase: SupabaseC
 
   return <section className="portugal-ai" id="sitter-ai">
     <header className="ai-header">
-      <p className="kicker">Ask about Chloe & Bengt</p>
+      <p className="kicker">Ask anything</p>
       {messages.length > 0 && <button className="ai-reset" type="button" onClick={resetChat}><RotateCcw size={14} />New chat</button>}
     </header>
 
-    {messages.length === 0 && <div className="ai-prompts" aria-label="Suggested questions">{suggestions.map((prompt) => <button key={prompt} type="button" onClick={() => void ask(undefined, prompt)}>{prompt}</button>)}</div>}
+    {messages.length === 0 && <p className="ai-intro">Answers from the guide, and from the internet if the guide does not cover it.</p>}
 
     {messages.length > 0 && <div className="ai-conversation" aria-live="polite">
-      {messages.map((item) => <article key={item.id} className={'ai-message ' + item.role}><small>{item.role === 'assistant' ? 'Guide assistant' : 'You'}</small><p>{item.content}</p></article>)}
+      {messages.map((item) => <article key={item.id} className={'ai-message ' + item.role}><small>{item.role === 'assistant' ? 'Guide assistant' : 'You'}</small><p>{item.role === 'assistant' ? rich(item.content) : item.content}</p></article>)}
       {asking && <article className="ai-message assistant typing"><small>Guide assistant</small><p><i /><i /><i /></p></article>}
       <div ref={endRef} />
     </div>}
 
     <form className="ai-composer" onSubmit={(event) => void ask(event)}>
       <label className="sr-only" htmlFor="sitter-ai-question">{messages.length ? 'Ask a follow-up' : 'Message the guide assistant'}</label>
-      <textarea id="sitter-ai-question" value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={handleKeyDown} maxLength={800} rows={2} placeholder={messages.length ? 'Ask a follow-up…' : 'Ask about feeding, walks, the crate, contacts…'} />
+      <textarea id="sitter-ai-question" value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={handleKeyDown} maxLength={800} rows={2} placeholder={messages.length ? 'Ask a follow-up…' : 'Ask about anything at all…'} />
       <button type="submit" disabled={asking || !question.trim()} aria-label="Send message"><Send size={18} /></button>
     </form>
-    <div className="ai-meta"><span>{question.length}/800</span><span>Answers come from this guide. Call or WhatsApp us for anything urgent.</span></div>
+    <div className="ai-meta"><span>{question.length}/800</span><span>Call or WhatsApp us for anything urgent.</span></div>
     {status && <p className="ai-status" role="status">{status}</p>}
   </section>;
 }

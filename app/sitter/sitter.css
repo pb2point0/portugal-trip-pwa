@@ -144,3 +144,5 @@
   .sitter-qr-row{grid-template-columns:1fr;gap:3px}
   .sitter-nav button{font-size:8.5px}
 }
+
+.sitter-hello{font-family:var(--display);font-size:15px!important;font-weight:600;color:var(--sand)!important;margin-bottom:9px!important;letter-spacing:-.01em}

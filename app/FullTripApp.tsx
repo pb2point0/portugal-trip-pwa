@@ -198,6 +198,7 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
   const heroTitle = tripPhase === 'during' ? <>Today: <em>{currentTripDay?.base ?? 'Portugal'}.</em></> : tripPhase === 'after' ? <>Honeymoon archive.</> : <>Our Portugal.<br/><em>Honeymoon.</em></>;
   const heroLede = tripPhase === 'during' ? currentTripDay?.plan : `${itinerary.length} days across mainland Portugal and Madeira.`;
   const dateRange = firstDay && lastDay ? `${compactDate(firstDay.date)}–${compactDate(lastDay.date)}` : 'Honeymoon dates';
+  const greetingName = userEmail.includes('@') ? '' : displayName(userEmail);
   const routeStops = Array.from(new Set(itinerary.map((day) => day.base).filter(Boolean))).slice(0, 5);
   const plural = (count:number, word:string) => count === 1 ? word : word + 's';
   const countdown = tripPhase === 'before'
@@ -364,7 +365,7 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
         {view === 'today' && <>
           <section className="hero-grid">
             <div className="hero-copy">
-              <p className="kicker"><Heart size={13} fill="currentColor"/> Our honeymoon</p>
+              <p className="kicker"><Heart size={13} fill="currentColor"/> {greetingName ? 'Hi '+greetingName : 'Our honeymoon'}</p>
               <h1>{heroTitle}</h1>
               <p className="hero-lede">{heroLede}</p>
               <div className="hero-actions"><button className="primary" onClick={() => openView('itinerary')}>See the full trip <CalendarDays size={17}/></button>{drives.length > 0 && <button className="secondary" onClick={() => openView('drives')}>Choose a drive <CarFront size={17}/></button>}</div>

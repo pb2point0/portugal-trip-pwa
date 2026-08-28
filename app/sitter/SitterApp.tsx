@@ -68,7 +68,7 @@ function ContactCard({ contact }: { contact: Contact }) {
   </div>;
 }
 
-export default function SitterApp({ supabase, passphrase }: { supabase: SupabaseClient; passphrase: string }) {
+export default function SitterApp({ supabase, passphrase, signedInAs }: { supabase: SupabaseClient; passphrase: string; signedInAs?: string }) {
   const [view, setView] = useState<NavKey>('home');
   const [closedMeals, setClosedMeals] = useState<string[]>([]);
   const topRef = useRef<HTMLDivElement>(null);
@@ -110,6 +110,7 @@ export default function SitterApp({ supabase, passphrase }: { supabase: Supabase
 
       {view === 'home' && <>
         <section className="sitter-card sitter-welcome">
+          {signedInAs && <p className="sitter-hello">Hi {signedInAs}.</p>}
           {welcome.map((line, index) => <p key={index}>{rich(line)}</p>)}
           <span className="sitter-dates">{tripWindow.label}</span>
         </section>

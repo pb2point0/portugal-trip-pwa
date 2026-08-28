@@ -8,11 +8,13 @@ import { functionError } from '../functionError';
 import '../auth.css';
 
 const storageKey = 'sitter-passphrase';
-type VerifyResponse = { ok?: boolean; error?: string };
+type VerifyResponse = { ok?: boolean; name?: string; error?: string };
+const nameKey = 'sitter-signed-in-as';
 
 export default function SitterGate() {
   const [passphrase, setPassphrase] = useState('');
   const [unlocked, setUnlocked] = useState<string | null>(null);
+  const [signedInAs, setSignedInAs] = useState(() => typeof window === 'undefined' ? '' : (window.sessionStorage.getItem(nameKey) ?? ''));
   const [checking, setChecking] = useState(isSupabaseConfigured);
   const [verifying, setVerifying] = useState(false);
   const [message, setMessage] = useState('');
@@ -25,7 +27,10 @@ export default function SitterGate() {
       ? supabase.functions.invoke<VerifyResponse>('sitter-ai', { body: { action: 'verify', passphrase: stored } })
       : Promise.resolve({ data: undefined, error: undefined });
     void verification.then(({ data, error }) => {
-      if (stored && !error && data?.ok) setUnlocked(stored);
+      if (stored && !error && data?.ok) {
+        if (data.name) { window.sessionStorage.setItem(nameKey, data.name); setSignedInAs(data.name); }
+        setUnlocked(stored);
+      }
       else if (stored) window.sessionStorage.removeItem(storageKey);
       setChecking(false);
     });
@@ -40,6 +45,7 @@ export default function SitterGate() {
     const { data, error } = await supabase.functions.invoke<VerifyResponse>('sitter-ai', { body: { action: 'verify', passphrase: clean } });
     if (!error && data?.ok) {
       window.sessionStorage.setItem(storageKey, clean);
+      if (data.name) { window.sessionStorage.setItem(nameKey, data.name); setSignedInAs(data.name); }
       setUnlocked(clean);
       setMessage('');
     } else {
@@ -49,7 +55,7 @@ export default function SitterGate() {
   }
 
   if (checking) return <main className="auth-shell"><div className="auth-loader" aria-label="Loading" /></main>;
-  if (unlocked && supabase) return <SitterApp supabase={supabase} passphrase={unlocked} />;
+  if (unlocked && supabase) return <SitterApp supabase={supabase} passphrase={unlocked} signedInAs={signedInAs} />;
 
   return <main className="auth-shell">
     <section className="auth-card">

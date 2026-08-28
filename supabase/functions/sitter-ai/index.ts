@@ -123,8 +123,16 @@ Deno.serve(async (request: Request) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  // SITTER_PASSPHRASE holds one passphrase, or several separated by commas.
-  const sitterPassphrases = (Deno.env.get('SITTER_PASSPHRASE') || '').split(',').map((value) => value.trim()).filter(Boolean);
+  // SITTER_PASSPHRASE is a comma-separated list. Each entry is either "passphrase"
+  // or "Name:passphrase", so the guide can say hello to whoever opened it.
+  const sitterPassphrases = (Deno.env.get('SITTER_PASSPHRASE') || '').split(',').map((entry) => {
+    const trimmed = entry.trim();
+    if (!trimmed) return null;
+    const split = trimmed.indexOf(':');
+    if (split > 0) return { name: trimmed.slice(0, split).trim(), secret: trimmed.slice(split + 1).trim() };
+    const derived = trimmed.match(/^[A-Za-z]+/)?.[0];
+    return { name: derived ? derived[0].toUpperCase() + derived.slice(1) : '', secret: trimmed };
+  }).filter((entry): entry is { name: string; secret: string } => !!entry?.secret);
   const openAIKey = Deno.env.get('OPENAI_API_KEY');
   if (!supabaseUrl || !serviceRoleKey || !sitterPassphrases.length || !openAIKey) return json({ error: 'The sitter guide is not configured yet.' }, 503, origin);
 
@@ -153,14 +161,14 @@ Deno.serve(async (request: Request) => {
   const { count: failCount } = await supabase.from('sitter_ai_events').select('id', { count: 'exact', head: true }).eq('identifier', identifier).eq('kind', 'fail').gte('created_at', fifteenMinAgo);
   if ((failCount ?? 0) >= 8) return json({ error: 'Too many attempts. Wait a few minutes and try again.' }, 429, origin);
 
-  let passphraseOk = false;
-  for (const candidate of sitterPassphrases) if (timingSafeEqual(passphrase, candidate)) passphraseOk = true;
-  if (!passphraseOk) {
+  let signedInAs: string | null = null;
+  for (const candidate of sitterPassphrases) if (timingSafeEqual(passphrase, candidate.secret)) signedInAs = candidate.name;
+  if (signedInAs === null) {
     await supabase.from('sitter_ai_events').insert({ identifier, kind: 'fail' });
     return json({ error: 'That passphrase was not recognized.' }, 401, origin);
   }
 
-  if (action === 'verify') return json({ ok: true }, 200, origin);
+  if (action === 'verify') return json({ ok: true, name: signedInAs }, 200, origin);
 
   if (!question) return json({ error: 'Ask a question first.' }, 400, origin);
   if (question.length > 800) return json({ error: 'Keep the question under 800 characters.' }, 400, origin);

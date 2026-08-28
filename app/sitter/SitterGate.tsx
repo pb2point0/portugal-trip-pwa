@@ -68,7 +68,7 @@ export default function SitterGate() {
         <button type="submit" disabled={verifying || !passphrase.trim()}>{verifying ? 'Checking…' : 'Open the guide'}</button>
         {message && <p role="status">{message}</p>}
       </form>}
-      <small>Dog &amp; house sitting guide · Aug 29 – Sep 14, 2026</small>
+      <small>Dog &amp; house sitting guide · Aug 29 to Sep 14, 2026</small>
     </section>
   </main>;
 }

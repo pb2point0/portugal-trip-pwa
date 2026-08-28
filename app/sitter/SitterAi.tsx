@@ -87,7 +87,7 @@ export default function SitterAi({ supabase, passphrase }: { supabase: SupabaseC
       <textarea id="sitter-ai-question" value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={handleKeyDown} maxLength={800} rows={2} placeholder={messages.length ? 'Ask a follow-up…' : 'Ask about feeding, walks, the crate, contacts…'} />
       <button type="submit" disabled={asking || !question.trim()} aria-label="Send message"><Send size={18} /></button>
     </form>
-    <div className="ai-meta"><span>{question.length}/800</span><span>Answers come from the guide above — call Patrik or Megan for anything urgent.</span></div>
+    <div className="ai-meta"><span>{question.length}/800</span><span>Answers come from this guide. Call or WhatsApp us for anything urgent.</span></div>
     {status && <p className="ai-status" role="status">{status}</p>}
   </section>;
 }

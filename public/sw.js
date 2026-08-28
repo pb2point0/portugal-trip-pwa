@@ -1,6 +1,6 @@
-const SHELL_CACHE='honeymoon-portugal-shell-v8';
+const SHELL_CACHE='honeymoon-portugal-shell-v9';
 const MAP_CACHE='honeymoon-portugal-viewed-maps-v1';
-const CORE=['/','/manifest.webmanifest','/favicon.svg','/apple-touch-icon.png','/icon-192.png','/icon-512.png'];
+const CORE=['/','/manifest.webmanifest','/favicon.svg','/apple-touch-icon.png','/icon-192.png','/icon-512.png','/sitter/','/sitter.webmanifest'];
 self.addEventListener('install',(event)=>{
   self.skipWaiting();
   event.waitUntil(caches.open(SHELL_CACHE).then((cache)=>cache.addAll(CORE)));
@@ -29,5 +29,6 @@ self.addEventListener('fetch',(event)=>{
     return;
   }
   if(url.origin!==self.location.origin) return;
-  event.respondWith(fetch(event.request).then((response)=>{const copy=response.clone();void caches.open(SHELL_CACHE).then((cache)=>cache.put(event.request,copy));return response;}).catch(()=>caches.match(event.request).then((cached)=>cached||caches.match('/'))));
+  const offlineShell=url.pathname.startsWith('/sitter')?'/sitter/':'/';
+  event.respondWith(fetch(event.request).then((response)=>{const copy=response.clone();void caches.open(SHELL_CACHE).then((cache)=>cache.put(event.request,copy));return response;}).catch(()=>caches.match(event.request).then((cached)=>cached||caches.match(offlineShell))));
 });

@@ -8,56 +8,66 @@ const allowedOrigins = new Set([
 ]);
 
 const guideContext = `
-HOUSE AND DOG GUIDE FOR FLYNN (AND JEREMY) — Aug 29 to Sep 14, 2026
-Patrik and Megan are in Portugal. Portugal is 5 hours ahead of Pennsylvania, so 9:00 PM there is 2:00 AM in Portugal. Flynn or Jeremy should still call if something is urgent, regardless of the time.
-
-QUICK REFERENCE
-- Chloe: 2 cups/day. 2 crushed allergy pills in the morning.
-- Bengt: 3 to 4 cups/day. No allergy pill.
-- Both dogs: nutrition powder sprinkled on the morning meal.
-- After Bengt eats a big meal, keep him calm for 30 to 60 minutes (no running, wrestling, or stairs).
-- Daycare: Playtime Pet Resort, 989 E Lancaster Ave, Downingtown, PA 19335. 215-910-4991. Open 7:00 AM to 8:00 PM weekdays.
-- Max time alone: 4 hours for Bengt, up to 6 hours for Chloe.
-- Trash goes out Thursday evening; pickup is early Friday morning.
-- Wifi password: [not filled in yet — tell the sitter to ask Patrik or Megan directly]
+HOUSE AND DOG GUIDE FOR FLYNN (AND HER BOYFRIEND JEREMY). Aug 29 to Sep 14, 2026.
+Patrik and Megan are in Portugal. Portugal is 5 hours ahead of Pennsylvania, so 9:00 PM in PA is 2:00 AM in Portugal. Flynn or Jeremy should still call if something is urgent, regardless of the time. Flynn already has Patrik's and Megan's phone numbers. WhatsApp is the best way to reach them, over wifi, with no international charges either direction.
 
 FEEDING
-Chloe gets 2 cups of her food per day with a sweet potato or similar topper mixed in (topper is left out for the sitter). Bengt gets 3 to 4 cups per day depending on topper amount — 3 cups if he gets a good amount of topper, since he is a growing puppy that range is fine. Ideally Bengt eats 3 to 4 smaller meals a day since two large meals can upset his stomach, but two cups morning and two at night is fine if that's easier. If Bengt eats two cups at once, keep him calm for 30 to 60 minutes afterward — a big meal followed by hard activity is genuinely risky for a dog his size. This caution is about Bengt only; Chloe is fine eating and carrying on as normal. Every morning both bowls get a sprinkle of the nutrition powder. Only Chloe's morning bowl gets two crushed allergy pills — Bengt does not get any. There are treats in the usual spot, fine to use for tricks.
+Bengt gets 3 cups a day total, split 1.5 cups in the morning and 1.5 cups at night. That is the right amount for his 40 pounds. Chloe gets 2 cups a day, 1 cup in the morning and 1 cup at night.
+
+Morning, first thing:
+- Take Bengt straight out to potty.
+- Chloe's bowl: 1 cup + nutrition powder + 2 crushed allergy pills + a spoonful of sardines.
+- Bengt's bowl: 1.5 cups + nutrition powder + a spoonful of sardines.
+- Walk them after. Usually both poop and pee.
+
+Afternoon, midday:
+- Walk and pee.
+- No meal. The rest of Bengt's food comes at dinner.
+
+Evening, dinner:
+- Chloe's bowl: 1 cup + a spoonful of sardines.
+- Bengt's bowl: 1.5 cups + a spoonful of sardines.
+
+Only Chloe gets the allergy pills, two of them, crushed, in her morning bowl only. Bengt never gets one. The nutrition powder goes in both morning bowls only, not at dinner. Sardines go in every meal for both dogs.
 
 WALKS
-The sitter has already walked both dogs with Patrik. Chloe pulls when she spots one of her dog friends — shorten the leash, stay calm, and she settles once she knows the sitter is in control. Bengt is good on leash but still a puppy, so stay attentive. They walk well together with Patrik but it is fine to walk them separately if that's easier — sitter's call.
+Flynn has already walked both dogs with Patrik. If either dog pulls, stop walking completely and give a little slack back on the leash. If they pull again, stop again. Once the leash is slack and they are not pulling, start walking again. Chloe pulls mainly when she spots one of her dog friends. Bengt walks well, though he is still a puppy. Walking them together or separately is fine, whatever is easier.
 
-BENGT AND THE CRATE (the important one)
-Bengt is a puppy and needs a lot of sleep. If he gets nippy, wild, or full of energy, that means he is OVERTIRED, not that he needs more exercise. Saying "let's go take a nap" is his cue to go to his crate — he may put up a small fight but knows the command, and once in he'll sleep two or more hours.
-Crying-in-the-crate rule:
-- Actively crying (nonstop, no breaks): if the crate is opened during this, the ONLY thing to do is take him straight outside to potty. If he goes, bring him right back to the crate and close it — no play, no staying out. This is intentional: crying should lead to a potty trip, never to playtime, or he'll learn crying gets him out to play.
-- If he pauses for a minute or two: he's fine to come out for good, take him to potty, and he can stay out.
-In practice he rarely does the nonstop version — usually a minute or two of fussing and then he passes out for hours. If he's recently gone potty, he's likely just being dramatic; it's fine to wait him out.
+TRAINING AND TREATS
+Training is highly encouraged and they both like it. They know these commands: touch, sit, stay, place, here, back up, stop. Treats are in the usual spot.
+
+THE CRATE
+When Bengt gets nippy and wild, he is overtired. More exercise will make it worse. Say "let's go take a nap" and he goes to his place. He will protest a bit. Once he is in, he sleeps two hours or more.
+When he cries in the crate:
+- Nonstop, no breaks: take him straight outside to potty, then right back in the crate. Do not let him play or stay out. The point is that crying leads to a potty trip, never to playtime.
+- Pauses for a minute or two: he is settled enough to come out. Take him to potty and he can stay out.
+In practice he rarely cries nonstop. Usually a minute or two, then he sleeps for a few hours.
 
 LEAVING THE HOUSE
-Both dogs go to daycare (Playtime Pet Resort, contact above) twice a week. On other days, coming home at lunch is ideal. Before leaving, take Bengt out to pee — he poops twice a day now, otherwise take him out to pee as often as possible. Closing the bedroom door and giving them run of the rest of the house for containment is fine. Do not leave them more than 4 hours, especially Bengt — Chloe can handle around 6.
+Both dogs go to daycare twice a week at Playtime Pet Resort, 989 E Lancaster Ave, Downingtown, PA 19335, 215-910-4991, open 7:00 AM to 8:00 PM weekdays. On other days, coming home at lunch is ideal. Take Bengt out to pee before leaving. Close the bedroom door and the dogs get the rest of the house. Four hours alone is the maximum for Bengt. Chloe can go about six.
 
-THINGS THAT WILL PROBABLY HAPPEN (and are fine)
-Chloe may get into the trash if something smells good; Bengt will then shred whatever she pulls out — easiest fix is taking the trash out or blocking the can with a chair. Bengt may chew things he shouldn't since he's a puppy — keep personal belongings out of reach and leave plenty of his toys around. Bengt will probably have a potty accident at some point, which is completely fine — to minimize them, get him outside right when he wakes up and right when he comes out of the crate. His subtle way of asking to go out: he runs over and starts playing with you — if he suddenly wants attention, that's usually what it means.
-
-EMERGENCIES
-- Ruth: vet, lives across the street, call her first. Contact: [not filled in yet — ask Patrik or Megan]
-- East Bradford Veterinary: their regular practice. Contact: [not filled in yet — ask Patrik or Megan]
-- Vet down the street (also knows the dogs). Contact: [not filled in yet — ask Patrik or Megan]
-- Sweta: primary backup person. Contact: [not filled in yet — ask Patrik or Megan]
-- Jen: neighbor. Contact: [not filled in yet — ask Patrik or Megan]
+THINGS THAT WILL PROBABLY HAPPEN
+Chloe raids the trash if anything in it smells good, and Bengt shreds whatever she drags out. Take the trash out or block the can with a chair. Bengt chews what he should not, so keep personal belongings out of reach and leave his toys around. Bengt will probably have a potty accident, which is fine. To minimize them, take him out right when he wakes up and right when he comes out of the crate. He asks to go out by running over and starting to play, so sudden attention usually means he needs to go.
 
 THE HOUSE
-- Trash out Thursday evening, pickup early Friday morning.
-- Packages delivered to the front door.
-- Plants were watered before they left; will probably only need water toward the end of the two weeks.
-- Thermostat is on a day/night timer, roughly 74/76 upstairs — the sitter is welcome to change the schedule or temperature however she likes, it's adjusted regularly anyway.
-- Wifi password: see above (not filled in yet).
+- Trash goes out Thursday evening, picked up early Friday.
+- Packages come to the front door.
+- Plants were watered before they left and will probably only need water toward the end.
+- Thermostat is on a day/night timer, about 74 and 76 upstairs. Flynn is welcome to change it however she likes.
+- Wifi password: [Patrik has not written this in yet. Tell her to ask Patrik.]
 
-REACHING PATRIK AND MEGAN
-- Patrik's number: [not filled in yet — ask Patrik or Megan]
-- Megan's number: [not filled in yet — ask Patrik or Megan]
-- WhatsApp is the best way to reach them — works over wifi with no international charges either direction.
+CONTACTS
+Closest by:
+- Ruth, next door, always home: 484-888-6733. Good first call for anything quick.
+Vets:
+- Ruth, also a neighbor, and a vet. This is a DIFFERENT Ruth from the one next door: 610-400-9235.
+- East Bradford Veterinary, their regular practice: [phone not written in yet. Tell her to ask Patrik.]
+General help:
+- Jenn, Bubba's mom. Bubba is Chloe's scraggly-haired friend and Flynn has met him: 484-639-1322.
+- Marigold, neighbor: 610-329-7502.
+If Flynn has to leave or cannot finish the stay:
+- Sweta will take the dogs: 215-206-8041.
+- Will, Sweta's husband: 615-438-3585.
 `.trim();
 
 function corsHeaders(origin: string | null) {
@@ -164,7 +174,7 @@ Deno.serve(async (request: Request) => {
     headers: { 'Authorization': `Bearer ${openAIKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: Deno.env.get('OPENAI_MODEL') || 'gpt-5.6-luna',
-      instructions: 'You are a helper for Flynn and her boyfriend Jeremy, who are house and dog sitting for Chloe (adult dog) and Bengt (puppy) while Patrik and Megan are traveling. Either of them may be the one asking. Answer only using the guide below. Be warm, concise, and practical — this is being read on a phone, often in the middle of handling a dog. If the guide does not cover something, say so plainly and tell them to call or WhatsApp Patrik or Megan rather than guessing. Several fields in the guide (wifi password, vet phone numbers, Patrik and Megan\'s numbers) are marked "not filled in yet" — if asked about one of those, say it has not been filled in yet and to ask Patrik directly, do not invent a number. This is not a medical professional: for anything that sounds like a real emergency, tell them to call the vet (Ruth first) right away.\n\nGUIDE:\n' + guideContext,
+      instructions: 'You are a helper for Flynn, who is house and dog sitting for Chloe (adult dog) and Bengt (puppy) while Patrik and Megan are in Portugal. Her boyfriend Jeremy is around sometimes and may also be the one asking. Answer only from the guide below. Keep the tone warm but plain: short sentences, no filler, no catchphrases, and never use em dashes. She is reading this on a phone, often while handling a dog, so lead with the answer. If the guide does not cover something, say so and tell her to call or WhatsApp Patrik or Megan rather than guessing. Two things are not filled in yet, the wifi password and East Bradford Veterinary\'s phone number. If asked about either, say Patrik has not written it in yet and she should ask him. Never invent a phone number. Be careful about the two Ruths: one is the next door neighbor who is always home, the other is a neighbor who is a vet. Always say which one you mean. You are not a medical professional. For anything that sounds like a real emergency, tell her to call a vet right away.\n\nGUIDE:\n' + guideContext,
       input: conversationInput,
       reasoning: { effort: 'none' },
       text: { verbosity: 'low' },

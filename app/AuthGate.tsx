@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { KeyRound, LockKeyhole, Mail } from 'lucide-react';
+import { KeyRound, LockKeyhole } from 'lucide-react';
 import FullTripApp from './FullTripApp';
 import TripMark from './TripMark';
 import { getSupabase, isSupabaseConfigured } from './supabase';
@@ -11,12 +11,12 @@ import './auth-password.css';
 
 const rememberKey = 'portugal-remember-device';
 const sessionMarker = 'portugal-session-active';
+type LoginResponse = { access_token?: string; refresh_token?: string; error?: string };
 
 export default function AuthGate() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(isSupabaseConfigured);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [passphrase, setPassphrase] = useState('');
   const [rememberDevice, setRememberDevice] = useState(true);
   const [signingIn, setSigningIn] = useState(false);
   const [message, setMessage] = useState('');
@@ -49,15 +49,22 @@ export default function AuthGate() {
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!supabase || !email || !password) return;
+    const clean = passphrase.trim();
+    if (!supabase || !clean) return;
     setSigningIn(true);
-    setMessage('Signing in…');
+    setMessage('Checking…');
     window.localStorage.setItem(rememberKey, String(rememberDevice));
     if (rememberDevice) window.sessionStorage.removeItem(sessionMarker);
     else window.sessionStorage.setItem(sessionMarker, 'true');
 
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    setMessage(error ? 'That email and password combination was not recognized.' : '');
+    const { data, error } = await supabase.functions.invoke<LoginResponse>('trip-login', { body: { passphrase: clean } });
+    if (error || !data?.access_token || !data.refresh_token) {
+      setMessage(data?.error || 'That passphrase was not recognized.');
+      setSigningIn(false);
+      return;
+    }
+    const { error: sessionError } = await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
+    setMessage(sessionError ? 'Could not open the trip. Try again.' : '');
     setSigningIn(false);
   }
 
@@ -73,16 +80,14 @@ export default function AuthGate() {
   return <main className="auth-shell">
     <section className="auth-card">
       <TripMark className="auth-trip-mark"/>
-      <p className="auth-kicker"><LockKeyhole size={13}/> Authorized travelers only</p>
+      <p className="auth-kicker"><LockKeyhole size={13}/> Just the two of us</p>
       <h1>Our Portugal<br/><em>honeymoon.</em></h1>
-      <p className="auth-lede">Sign in to open the itinerary, reservations, routes, and plans.</p>
-      {!isSupabaseConfigured ? <div className="auth-setup"><KeyRound size={20}/><div><strong>Supabase setup needed</strong><p>Add the project URL and publishable key to the GitHub repository secrets before deployment.</p></div></div> : <form className="auth-form" autoComplete="on" onSubmit={(event) => void signIn(event)}>
-        <label htmlFor="email">Email</label>
-        <div><Mail size={18}/><input id="email" name="username" type="text" inputMode="email" autoComplete="username" autoCapitalize="none" spellCheck={false} enterKeyHint="next" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com"/></div>
-        <label htmlFor="password">Trip password</label>
-        <div><LockKeyhole size={18}/><input id="password" name="password" type="password" autoComplete="current-password" enterKeyHint="go" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Your trip password"/></div>
+      <p className="auth-lede">Enter the passphrase to open the itinerary, reservations, routes, and plans.</p>
+      {!isSupabaseConfigured ? <div className="auth-setup"><KeyRound size={20}/><div><strong>Supabase setup needed</strong><p>Add the project URL and publishable key to the GitHub repository secrets before deployment.</p></div></div> : <form className="auth-form" autoComplete="off" onSubmit={(event) => void signIn(event)}>
+        <label htmlFor="passphrase">Passphrase</label>
+        <div><LockKeyhole size={18}/><input id="passphrase" name="passphrase" type="password" inputMode="numeric" autoComplete="off" autoCapitalize="none" spellCheck={false} enterKeyHint="go" value={passphrase} onChange={e=>setPassphrase(e.target.value)} placeholder="Passphrase"/></div>
         <label className="auth-remember"><input type="checkbox" checked={rememberDevice} onChange={(event)=>setRememberDevice(event.target.checked)}/><span>Remember this device</span></label>
-        <button type="submit" disabled={signingIn || !email || !password}>{signingIn ? 'Signing in…' : 'Open our honeymoon'}</button>
+        <button type="submit" disabled={signingIn || !passphrase.trim()}>{signingIn ? 'Opening…' : 'Open our honeymoon'}</button>
         {message&&<p role="status">{message}</p>}
         <small className="auth-session-note">The login session is stored only for access to this protected trip. No advertising or analytics cookies.</small>
       </form>}

@@ -12,6 +12,20 @@ Installable trip companion for authorized travelers. The static frontend can be 
 
 The publishable Supabase key is intentionally used by the browser. Database row-level policies—not key secrecy—protect the private tables. The OpenAI key exists only in the Edge Function environment.
 
+## Trip sign-in
+
+The honeymoon app is opened with a shared passphrase rather than an email and password. The passphrase never reaches the database. The `trip-login` Edge Function checks it server-side, then mints a real Supabase session for the trip account using the service role key, and the browser adopts that session. Row-level security and the JWT check in `portugal-ai` are unchanged, so the passphrase only controls who is issued a session; it is not a substitute for the database policies.
+
+Secrets, set in **Supabase → Edge Functions → Secrets**:
+
+- `TRIP_PASSPHRASE` — one passphrase, or several separated by commas.
+- `TRIP_EMAIL` — the Supabase auth user the session is minted for. It must have a row in `public.trip_members`.
+- `SUPABASE_SERVICE_ROLE_KEY` — already required by `sitter-ai`.
+
+Deploy `supabase/functions/trip-login` with **Verify JWT** disabled (already set in `supabase/config.toml`).
+
+Failed attempts are rate limited to 5 per 15 minutes per IP address, and during a lockout the correct passphrase is refused too. Short passphrases are only as safe as that limit, so keep the limit in place if you shorten the passphrase further. If the passphrase flow ever breaks, you can still recover access from the Supabase dashboard.
+
 ## Privacy model
 
 - The public bundle contains only the authenticated application shell.

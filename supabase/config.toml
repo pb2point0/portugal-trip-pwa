@@ -3,3 +3,6 @@ verify_jwt = true
 
 [functions.sitter-ai]
 verify_jwt = false
+
+[functions.trip-login]
+verify_jwt = false

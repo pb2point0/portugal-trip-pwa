@@ -286,3 +286,15 @@ button,a,summary{touch-action:manipulation}
 .translation-result>div{display:flex;gap:8px;margin-top:14px}
 .translation-result>div button{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ocean);padding:9px 12px;font-size:11px;font-weight:800;cursor:pointer}
 .translator-note.error{color:var(--coral)}
+
+/* ---- Fraunces sets wider than Georgia. Keep display type from blowing out the layout. ---- */
+/* Grid and flex children default to min-width:auto, so an over-wide heading widens the
+   whole column instead of wrapping, which pushes buttons and cards off screen. */
+.hero-grid>*,.hero-copy,.page-title,.countdown-card,.hero-actions,.hero-actions button{min-width:0}
+.hero-copy h1,.page-title h1,.empty-trip h1,.hero-lede{overflow-wrap:break-word}
+@media(max-width:620px){
+  .hero-copy h1{font-size:clamp(40px,12vw,62px)}
+  .page-title h1{font-size:clamp(36px,10.5vw,54px)}
+  .hero-actions button{width:100%;justify-content:center}
+  .countdown-card{width:100%}
+}

@@ -53,16 +53,16 @@ export default function SitterGate() {
   return <main className="auth-shell">
     <section className="auth-card">
       <span className="auth-trip-mark" aria-hidden="true" style={{ display: 'grid', placeItems: 'center' }}><PawPrint size={24} color="#c9634c" /></span>
-      <p className="auth-kicker"><LockKeyhole size={13} /> For Flynn (and Jeremy)</p>
-      <h1>House &amp; dog<br /><em>guide.</em></h1>
-      <p className="auth-lede">Enter the passphrase Patrik gave you to open the sitter guide.</p>
+      <p className="auth-kicker"><LockKeyhole size={13} /> Flynn (and Jeremy)</p>
+      <h1>For <em>Flynn.</em></h1>
+      <p className="auth-lede">A guide to Bengt and Chloe. Enter the passphrase Patrik gave you.</p>
       {!isSupabaseConfigured ? <div className="auth-setup"><KeyRound size={20} /><div><strong>Not set up yet</strong><p>The sitter guide isn&apos;t configured yet on this deployment.</p></div></div> : <form className="auth-form" autoComplete="off" onSubmit={(event) => void unlock(event)}>
         <label htmlFor="sitter-passphrase">Passphrase</label>
         <div><LockKeyhole size={18} /><input id="sitter-passphrase" name="sitter-passphrase" type="password" autoComplete="off" enterKeyHint="go" value={passphrase} onChange={(e) => setPassphrase(e.target.value)} placeholder="Passphrase" /></div>
         <button type="submit" disabled={verifying || !passphrase.trim()}>{verifying ? 'Checking…' : 'Open the guide'}</button>
         {message && <p role="status">{message}</p>}
       </form>}
-      <small>Dog &amp; house sitting guide · Aug 29 to Sep 14, 2026</small>
+      <small>Aug 29 to Sep 14, 2026</small>
     </section>
   </main>;
 }

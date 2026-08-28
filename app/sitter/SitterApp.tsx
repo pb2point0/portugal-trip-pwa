@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { ArrowRight, CookingPot, Footprints, House, MapPin, Moon, PawPrint, Phone, Soup, Sun, Sunrise, Sunset } from 'lucide-react';
+import { ArrowRight, ChevronDown, CookingPot, Footprints, House, MapPin, Moon, PawPrint, Phone, Soup, Sun, Sunrise, Sunset } from 'lucide-react';
 import SitterAi from './SitterAi';
 import { rich } from './rich';
 import {
@@ -33,7 +33,7 @@ const tabs: { key: NavKey; label: string; icon: typeof House }[] = [
 ];
 
 const headings: Record<NavKey, ReactNode> = {
-  home: <>House &amp; dog guide<br /><em>for Flynn.</em></>,
+  home: <>For <em>Flynn.</em></>,
   feeding: <>Feeding.</>,
   walks: <>Walks &amp; <em>training.</em></>,
   crate: <>The <em>crate.</em></>,
@@ -70,6 +70,7 @@ function ContactCard({ contact }: { contact: Contact }) {
 
 export default function SitterApp({ supabase, passphrase }: { supabase: SupabaseClient; passphrase: string }) {
   const [view, setView] = useState<NavKey>('home');
+  const [closedMeals, setClosedMeals] = useState<string[]>([]);
   const topRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -96,13 +97,14 @@ export default function SitterApp({ supabase, passphrase }: { supabase: Supabase
       <header className="sitter-bar">
         <span className="sitter-mark" aria-hidden="true"><PawPrint size={18} /></span>
         <span className="sitter-bar-copy">
-          <small>Sitter guide</small>
-          <strong>Chloe &amp; Bengt</strong>
+          <small>For Flynn</small>
+          <strong>Bengt &amp; Chloe</strong>
         </span>
       </header>
 
       <div className="sitter-page-head">
         <h1>{headings[view]}</h1>
+        {view === 'home' && <p className="sitter-subhead">A guide to Bengt and Chloe.</p>}
         {view === 'feeding' && <p>{rich(feedingNote)}</p>}
       </div>
 
@@ -130,12 +132,19 @@ export default function SitterApp({ supabase, passphrase }: { supabase: Supabase
       {view === 'feeding' && <>
         {meals.map((meal) => {
           const Icon = mealIcons[meal.tone];
+          const open = !closedMeals.includes(meal.id);
           return <article className="sitter-meal" data-tone={meal.tone} key={meal.id}>
-            <div className="sitter-meal-head">
+            <button
+              type="button"
+              className="sitter-meal-head"
+              aria-expanded={open}
+              onClick={() => setClosedMeals((current) => open ? [...current, meal.id] : current.filter((id) => id !== meal.id))}
+            >
               <span className="sitter-meal-icon" aria-hidden="true"><Icon size={17} /></span>
               <h2>{meal.label}</h2>
-            </div>
-            <div className="sitter-meal-body">
+              <ChevronDown className="sitter-meal-chevron" size={19} aria-hidden="true" />
+            </button>
+            <div className="sitter-meal-body" hidden={!open}>
               {meal.before.map((step, index) => <p className="sitter-step" key={'b' + index}><ArrowRight size={15} />{rich(step)}</p>)}
               {meal.bowls.map((bowl) => <div className="sitter-bowl" key={bowl.dog}>
                 <div className="sitter-bowl-dog"><b>{bowl.dog}</b><i>{bowl.amount}</i></div>
@@ -145,6 +154,7 @@ export default function SitterApp({ supabase, passphrase }: { supabase: Supabase
             </div>
           </article>;
         })}
+
         {feedingExtras.map((section) => <SectionCard key={section.id} section={section} />)}
       </>}
 

@@ -5,15 +5,15 @@ const display = Fraunces({ subsets: ['latin'], variable: '--sitter-display', dis
 const body = Inter({ subsets: ['latin'], variable: '--sitter-body', display: 'swap' });
 
 export const metadata: Metadata = {
-  title: 'Sitter Guide',
-  description: 'House and dog sitting guide for Chloe and Bengt.',
-  applicationName: 'Sitter Guide',
+  title: 'For Flynn',
+  description: 'A guide to Bengt and Chloe.',
+  applicationName: 'For Flynn',
   manifest: '/sitter.webmanifest',
   icons: {
     icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }, { url: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
     apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
-  appleWebApp: { capable: true, title: 'Sitter Guide', statusBarStyle: 'black-translucent' },
+  appleWebApp: { capable: true, title: 'For Flynn', statusBarStyle: 'black-translucent' },
   robots: { index: false, follow: false, nocache: true },
 };
 

@@ -128,6 +128,7 @@ type FullTripAppProps = { supabase:SupabaseClient; userEmail:string; onSignOut:(
 export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTripAppProps) {
   const [view, setView] = useState<View>('today');
   const [selectedDriveIndex, setSelectedDriveIndex] = useState(0);
+  const [driveCardOrder, setDriveCardOrder] = useState<number[]>([]);
   const [trip, setTrip] = useState<TripPayload>(emptyTrip);
   const [tripId, setTripId] = useState('primary');
   const [loadingTrip, setLoadingTrip] = useState(true);
@@ -143,6 +144,9 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
   const [menuOpen, setMenuOpen] = useState(false);
   const [translateText, setTranslateText] = useState('');
   const [direction, setDirection] = useState<'en-pt'|'pt-en'>('en-pt');
+  const [translation, setTranslation] = useState('');
+  const [translating, setTranslating] = useState(false);
+  const [translateNote, setTranslateNote] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
   const mapPanelRef = useRef<HTMLDivElement>(null);
@@ -163,8 +167,9 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
         const payload=normalizeTrip(data.payload as TripPayload);
         setTrip(payload);
         setTripId(data.trip_id);
-        setExpandedDay(payload.itinerary[0]?.date ?? null);
+        setExpandedDay(null);
         setSelectedDriveIndex(0);
+        setDriveCardOrder((payload.drives??[]).map((_,index)=>index).slice(1));
         setImportNote(`Honeymoon synced · ${payload.itinerary.length} days`);
       } else {
         setImportNote(error ? `Could not sync: ${error.message}` : 'No trip data yet — import the workbook to begin');
@@ -193,11 +198,29 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
   const heroLede = tripPhase === 'during' ? currentTripDay?.plan : `${itinerary.length} days across mainland Portugal and Madeira.`;
   const dateRange = firstDay && lastDay ? `${compactDate(firstDay.date)}–${compactDate(lastDay.date)}` : 'Honeymoon dates';
   const routeStops = Array.from(new Set(itinerary.map((day) => day.base).filter(Boolean))).slice(0, 5);
+  const plural = (count:number, word:string) => count === 1 ? word : word + 's';
+  const countdown = tripPhase === 'before'
+    ? { value: daysUntil, unit: plural(daysUntil, 'day'), tail: daysUntil === 0 ? 'we leave today' : 'until we go' }
+    : tripPhase === 'during'
+      ? { value: currentDayIndex + 1, unit: 'of ' + itinerary.length, tail: 'days in Portugal' }
+      : { value: itinerary.length, unit: plural(itinerary.length, 'day'), tail: 'we will keep' };
+  const activeStopIndex = tripPhase === 'before' ? -1
+    : tripPhase === 'after' ? routeStops.length - 1
+    : Math.max(0, routeStops.indexOf(currentTripDay?.base ?? ''));
   const activeDriveIndex = selectedDriveIndex < drives.length ? selectedDriveIndex : 0;
   const selectedDrive = drives[activeDriveIndex];
   const portoStay=stayRangeFor(itinerary,'Porto');
   const portoBookingHref=stayBookingUrl('Porto',itinerary);
-  const googleTranslateUrl = `https://translate.google.com/?sl=${direction==='en-pt'?'en':'pt'}&tl=${direction==='en-pt'?'pt':'en'}&text=${encodeURIComponent(translateText)}&op=translate`;
+  async function runTranslate() {
+    const text=translateText.trim();
+    if(!text||translating) return;
+    setTranslating(true);
+    setTranslateNote('');
+    const {data,error}=await supabase.functions.invoke<{translation?:string;error?:string}>('portugal-ai',{body:{mode:'translate',direction,question:text}});
+    if(error||!data?.translation) setTranslateNote(data?.error||error?.message||'That could not be translated right now.');
+    else setTranslation(data.translation);
+    setTranslating(false);
+  }
 
   function openView(next:View) {
     setView(next);
@@ -207,7 +230,9 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
       window.scrollTo({top:0,behavior:'smooth'});
     });
   }
+  // Picking a route swaps it into the map and drops the one it replaced at the top of the deck.
   function selectDrive(index:number) {
+    setDriveCardOrder((current)=>[activeDriveIndex,...current.filter((id)=>id!==index&&id!==activeDriveIndex)]);
     setSelectedDriveIndex(index);
     requestAnimationFrame(()=>mapPanelRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));
   }
@@ -344,10 +369,18 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
               <div className="hero-actions"><button className="primary" onClick={() => openView('itinerary')}>See the full trip <CalendarDays size={17}/></button>{drives.length > 0 && <button className="secondary" onClick={() => openView('drives')}>Choose a drive <CarFront size={17}/></button>}</div>
             </div>
             <aside className="countdown-card">
-              <div className="sun-orbit"><span>{tripPhase==='before'?daysUntil:tripPhase==='during'?currentDayIndex+1:itinerary.length}</span><small>{tripPhase==='during'?'day':'days'}</small></div>
-              <p>{tripPhase==='before'?'until the first day!':tripPhase==='during'?'of this trip':'in this Portugal story'}</p><strong>{tripPhase==='during'&&currentTripDay?`${compactDate(currentTripDay.date)} · ${currentTripDay.base}`:tripPhase==='after'?dateRange:firstDay?`${compactDate(firstDay.date)} · ${firstDay.base}`:'Honeymoon itinerary'}</strong>
-              <div className="route-dots"><i/><b/><i/><b/><i/></div>
-              <div className="mini-route">{routeStops.map((stop) => <span key={stop}>{stop}</span>)}</div>
+              <p className="countdown-kicker">{tripPhase==='before'?'Counting down':tripPhase==='during'?'On the road':'The trip'}</p>
+              <div className="countdown-figure">
+                <strong>{countdown.value}</strong>
+                <span>{countdown.unit}<em>{countdown.tail}</em></span>
+              </div>
+              <p className="countdown-where">{tripPhase==='during'&&currentTripDay?`${compactDate(currentTripDay.date)} · ${currentTripDay.base}`:tripPhase==='after'?dateRange:firstDay?`${compactDate(firstDay.date)} · ${firstDay.base}`:'Honeymoon itinerary'}</p>
+              {routeStops.length>1&&<div className="route-line" style={{gridTemplateColumns:`repeat(${routeStops.length},minmax(0,1fr))`}}>
+                {routeStops.map((stop,index)=><span key={stop} className={'route-node'+(index<=activeStopIndex?' reached':'')+(index===activeStopIndex?' current':'')}>
+                  <i/>
+                  <small>{stop}</small>
+                </span>)}
+              </div>}
             </aside>
           </section>
           <PortugalAi supabase={supabase} base={currentTripDay?.base??firstDay?.base??'Portugal'} tripPhase={tripPhase}/>
@@ -448,7 +481,6 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
         {view === 'drives' && <section className="content-page drives-page">
           <div className="page-title"><p className="kicker">{drives.length} Madeira routes</p><h1>Driving routes.</h1></div>
           <div className="drives-layout">
-            <label className="drive-select"><span>Select a route</span><select value={activeDriveIndex} onChange={(event)=>selectDrive(Number(event.target.value))}>{drives.map((drive,index)=><option key={drive.id+'-option-'+index} value={index}>{String(drive.order).padStart(2,'0')} {drive.name}</option>)}</select></label>
             {selectedDrive &&
             <div ref={mapPanelRef} className="map-panel">
               <RouteMap key={activeDriveIndex} drive={selectedDrive}/>
@@ -462,16 +494,41 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
                 <details className="route-section"><summary>Stops</summary><div className="stop-line">{selectedDrive.stops.map((stop,i)=><span key={`${stop}-${i}`}><i style={{borderColor:selectedDrive.color}}/>{stop}</span>)}</div></details>
               </div>
             </div>}
+            {driveCardOrder.length>0&&<div className="drive-deck">
+              <p className="kicker">Other routes</p>
+              <div className="drive-cards">{driveCardOrder.map((index)=>{
+                const drive=drives[index];
+                if(!drive) return null;
+                return <button key={drive.id+'-card-'+index} type="button" className="drive-card" onClick={()=>selectDrive(index)}>
+                  <span className="drive-card-bar" style={{background:drive.color}}/>
+                  <span className="drive-card-copy">
+                    <small>{String(drive.order).padStart(2,'0')} · {drive.distance} · {drive.duration}</small>
+                    <strong>{drive.name}</strong>
+                    <span>{drive.stops.slice(0,3).join(' · ')}</span>
+                  </span>
+                  <ChevronRight size={18}/>
+                </button>;
+              })}</div>
+            </div>}
           </div>
         </section>}
 
         {view === 'translate' && <section className="content-page translate-page">
-          <div className="page-title"><p className="kicker">English ↔ European Portuguese</p><h1>Quick translation.</h1><p>Open Google Translate for custom text, or use the offline phrases below.</p></div>
+          <div className="page-title"><p className="kicker">English ↔ European Portuguese</p><h1>Quick translation.</h1><p>Translate anything below, or use the offline phrases further down.</p></div>
           <div className="translator-card">
-            <div className="language-switch"><button className={direction==='en-pt'?'active':''} onClick={()=>setDirection('en-pt')}>English → Portuguese</button><button className={direction==='pt-en'?'active':''} onClick={()=>setDirection('pt-en')}>Portuguese → English</button></div>
-            <textarea value={translateText} onChange={e=>setTranslateText(e.target.value)} placeholder={direction==='en-pt'?'Type what you want to say…':'Escreva o que ouviu…'} aria-label="Text to translate"/>
-            <div className="translator-actions"><span>{translateText.length}/500</span><a className={translateText?'':'disabled'} href={translateText?googleTranslateUrl:undefined} target="_blank" rel="noreferrer">Translate with Google <ExternalLink size={16}/></a></div>
-            <p className="translator-note">This opens the official Google Translate page. No paid API key or traveler text is stored in this app.</p>
+            <div className="language-switch"><button className={direction==='en-pt'?'active':''} onClick={()=>{setDirection('en-pt');setTranslation('')}}>English → Portuguese</button><button className={direction==='pt-en'?'active':''} onClick={()=>{setDirection('pt-en');setTranslation('')}}>Portuguese → English</button></div>
+            <textarea value={translateText} maxLength={800} onChange={e=>{setTranslateText(e.target.value);setTranslation('')}} placeholder={direction==='en-pt'?'Type what you want to say…':'Escreva o que ouviu…'} aria-label="Text to translate"/>
+            <div className="translator-actions"><span>{translateText.length}/800</span><button type="button" disabled={!translateText.trim()||translating} onClick={()=>void runTranslate()}>{translating?'Translating…':'Translate'} <Languages size={16}/></button></div>
+            {translation&&<div className="translation-result">
+              <small>{direction==='en-pt'?'European Portuguese':'English'}</small>
+              <p>{translation}</p>
+              <div>
+                <button type="button" onClick={()=>speak(translation,direction==='en-pt'?'pt-PT':'en-US')}><Volume2 size={16}/>Speak</button>
+                <button type="button" onClick={()=>void navigator.clipboard.writeText(translation)}><Copy size={16}/>Copy</button>
+              </div>
+            </div>}
+            {translateNote&&<p className="translator-note error" role="status">{translateNote}</p>}
+            <p className="translator-note">European Portuguese, not Brazilian. Nothing you type is stored.</p>
           </div>
           <div className="phrase-head"><div><p className="kicker">Offline phrasebook</p><h2>Small phrases, big help.</h2></div><span>Portugal pronunciation</span></div>
           <div className="phrase-grid">{phrases.map(phrase=><article key={phrase.en}><small>{phrase.group}</small><p>{phrase.en}</p><strong>{phrase.pt}</strong><div><button onClick={()=>speak(phrase.pt)} aria-label={`Speak ${phrase.pt}`}><Volume2 size={16}/>Speak</button><button onClick={()=>void navigator.clipboard.writeText(phrase.pt)} aria-label={`Copy ${phrase.pt}`}><Copy size={16}/>Copy</button></div></article>)}</div>
@@ -479,7 +536,11 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
         </>}
       </div>
 
-      <nav className="bottom-nav" style={{gridTemplateColumns:'repeat('+nav.length+',minmax(0,1fr))'}} aria-label="Mobile navigation">{nav.map(({id,label,icon:Icon})=><button key={id} className={view===id?'active':''} onClick={()=>openView(id)}><Icon size={20}/>{label}</button>)}</nav>
+      <nav className="bottom-nav" aria-label="Mobile navigation">
+        <div className="bottom-nav-inner" style={{gridTemplateColumns:'repeat('+nav.length+',minmax(0,1fr))'}}>
+          {nav.map(({id,label,icon:Icon})=><button key={id} className={view===id?'active':''} onClick={()=>openView(id)}><Icon size={19}/>{label}</button>)}
+        </div>
+      </nav>
     </main>
   );
 }

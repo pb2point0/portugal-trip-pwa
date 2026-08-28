@@ -46,6 +46,7 @@
 }
 .sitter-page-head h1 em{font-style:normal;color:var(--forest)}
 .sitter-page-head p{margin:11px 0 0;color:var(--muted);font-size:14px;line-height:1.6}
+.sitter-page-head .sitter-subhead{font-family:var(--display);font-size:17px;font-weight:400;color:var(--forest);margin-top:7px}
 .sitter-page-head p strong{color:var(--ink);font-weight:650}
 
 /* Cards */
@@ -76,7 +77,10 @@
 
 /* Meals */
 .sitter-meal{margin-top:16px;background:var(--paper);border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:0 1px 2px rgba(7,61,87,.04),0 12px 30px -12px rgba(7,61,87,.13)}
-.sitter-meal-head{display:flex;align-items:center;gap:11px;padding:15px 19px;border-bottom:1px solid var(--line)}
+.sitter-meal-head{display:flex;align-items:center;gap:11px;width:100%;padding:15px 19px;border:0;border-bottom:1px solid var(--line);text-align:left;cursor:pointer}
+.sitter-meal-chevron{margin-left:auto;opacity:.55;transition:transform .2s}
+.sitter-meal-head[aria-expanded="false"] .sitter-meal-chevron{transform:rotate(-90deg)}
+.sitter-meal-head[aria-expanded="false"]{border-bottom-color:transparent}
 .sitter-meal-head h2{margin:0;font-family:var(--display);font-size:21px;font-weight:600;letter-spacing:-.02em}
 .sitter-meal-icon{width:32px;height:32px;flex:0 0 auto;border-radius:10px;display:grid;place-items:center;background:#fff}
 .sitter-meal[data-tone="am"] .sitter-meal-head{background:linear-gradient(100deg,#fbf1de,#f7e8ce)}
@@ -114,7 +118,8 @@
 .sitter-contact-map{display:inline-flex;align-items:center;gap:5px;margin-top:7px;color:var(--ocean);font-size:12px;font-weight:650;text-decoration:underline;text-decoration-color:rgba(7,61,87,.3);text-underline-offset:2px}
 
 /* Bottom nav */
-.sitter-nav{position:fixed;z-index:100;left:0;right:0;bottom:0;display:flex;justify-content:center;padding:0 9px calc(9px + env(safe-area-inset-bottom));pointer-events:none}
+/* Equal 9px inset on the sides and the bottom. */
+.sitter-nav{position:fixed;z-index:100;left:0;right:0;bottom:0;display:flex;justify-content:center;padding:0 9px 9px;pointer-events:none}
 .sitter-nav-inner{
   pointer-events:auto;width:100%;max-width:520px;
   display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:7px;

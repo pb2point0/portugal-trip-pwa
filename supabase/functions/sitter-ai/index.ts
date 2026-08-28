@@ -123,9 +123,10 @@ Deno.serve(async (request: Request) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  const sitterPassphrase = Deno.env.get('SITTER_PASSPHRASE');
+  // SITTER_PASSPHRASE holds one passphrase, or several separated by commas.
+  const sitterPassphrases = (Deno.env.get('SITTER_PASSPHRASE') || '').split(',').map((value) => value.trim()).filter(Boolean);
   const openAIKey = Deno.env.get('OPENAI_API_KEY');
-  if (!supabaseUrl || !serviceRoleKey || !sitterPassphrase || !openAIKey) return json({ error: 'The sitter guide is not configured yet.' }, 503, origin);
+  if (!supabaseUrl || !serviceRoleKey || !sitterPassphrases.length || !openAIKey) return json({ error: 'The sitter guide is not configured yet.' }, 503, origin);
 
   const supabase = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
   const identifier = (request.headers.get('x-forwarded-for')?.split(',')[0].trim()) || 'unknown';
@@ -152,7 +153,9 @@ Deno.serve(async (request: Request) => {
   const { count: failCount } = await supabase.from('sitter_ai_events').select('id', { count: 'exact', head: true }).eq('identifier', identifier).eq('kind', 'fail').gte('created_at', fifteenMinAgo);
   if ((failCount ?? 0) >= 8) return json({ error: 'Too many attempts. Wait a few minutes and try again.' }, 429, origin);
 
-  if (!timingSafeEqual(passphrase, sitterPassphrase)) {
+  let passphraseOk = false;
+  for (const candidate of sitterPassphrases) if (timingSafeEqual(passphrase, candidate)) passphraseOk = true;
+  if (!passphraseOk) {
     await supabase.from('sitter_ai_events').insert({ identifier, kind: 'fail' });
     return json({ error: 'That passphrase was not recognized.' }, 401, origin);
   }

@@ -92,8 +92,12 @@ Deno.serve(async (request: Request) => {
 
   let question = '';
   let history:ChatMessage[]=[];
+  let mode:'ask'|'translate'='ask';
+  let direction:'en-pt'|'pt-en'='en-pt';
   try {
-    const body = await request.json() as { question?:unknown; history?:unknown };
+    const body = await request.json() as { question?:unknown; history?:unknown; mode?:unknown; direction?:unknown };
+    mode=body.mode==='translate'?'translate':'ask';
+    direction=body.direction==='pt-en'?'pt-en':'en-pt';
     question=typeof body.question==='string'?body.question.trim():'';
     if (Array.isArray(body.history)) history=body.history.filter((item):item is ChatMessage=>{
       if (!item||typeof item!=='object') return false;
@@ -103,8 +107,8 @@ Deno.serve(async (request: Request) => {
   } catch {
     return json({ error: 'The question must be valid JSON.' }, 400, origin);
   }
-  if (!question) return json({ error: 'Ask a question first.' }, 400, origin);
-  if (question.length > 800) return json({ error: 'Keep the question under 800 characters.' }, 400, origin);
+  if (!question) return json({ error: mode==='translate'?'Type something to translate first.':'Ask a question first.' }, 400, origin);
+  if (question.length > 800) return json({ error: 'Keep the text under 800 characters.' }, 400, origin);
 
   const minuteAgo = new Date(Date.now() - 60_000).toISOString();
   const dayAgo = new Date(Date.now() - 86_400_000).toISOString();
@@ -117,6 +121,33 @@ Deno.serve(async (request: Request) => {
 
   const { error: usageError } = await supabase.from('ai_requests').insert({ user_id: user.id });
   if (usageError) return json({ error: 'The AI rate limit is not configured yet.' }, 503, origin);
+
+  if (mode==='translate') {
+    const source=direction==='en-pt'?'English':'European Portuguese';
+    const target=direction==='en-pt'?'European Portuguese':'English';
+    const translateResponse = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${openAIKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: Deno.env.get('OPENAI_MODEL') || 'gpt-5.6-luna',
+        instructions: `Translate the user's text from ${source} to ${target}. Use European Portuguese as spoken in Portugal, never Brazilian Portuguese. Return only the translation. No quotes, no commentary, no pronunciation guide, no alternatives. Keep the register natural for a traveler speaking to a local.`,
+        input: [{ role: 'user' as const, content: question }],
+        reasoning: { effort: 'none' },
+        text: { verbosity: 'low' },
+        max_output_tokens: 400,
+        store: false,
+        safety_identifier: await safetyIdentifier(user.id),
+      }),
+    });
+    const translatePayload = await translateResponse.json() as Record<string, unknown>;
+    if (!translateResponse.ok) {
+      console.error('OpenAI translate failed', { status: translateResponse.status, requestId: translateResponse.headers.get('x-request-id') });
+      return json({ error: 'The translator could not answer right now.' }, 502, origin);
+    }
+    const translation = getOutputText(translatePayload);
+    if (!translation) return json({ error: 'The translator returned nothing.' }, 502, origin);
+    return json({ translation }, 200, origin);
+  }
 
   const {data:tripRow,error:tripError}=await supabase.from('trip_data').select('payload').order('updated_at',{ascending:false}).limit(1).maybeSingle();
   if (tripError||!tripRow?.payload) return json({error:'Your trip context could not be loaded.'},503,origin);

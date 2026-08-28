@@ -1,7 +1,7 @@
 {
-  "name": "Chloe & Bengt Sitter Guide",
-  "short_name": "Sitter Guide",
-  "description": "House and dog sitting guide for Chloe and Bengt.",
+  "name": "For Flynn",
+  "short_name": "For Flynn",
+  "description": "A guide to Bengt and Chloe.",
   "start_url": "/sitter/",
   "scope": "/sitter/",
   "id": "/sitter/",

@@ -24,7 +24,7 @@ export default function SitterApp({ supabase, passphrase, onLock }: { supabase: 
           <span className="sitter-mark" aria-hidden="true"><PawPrint size={22} /></span>
           <button className="sitter-lock" type="button" onClick={onLock}><LockKeyhole size={12} />Lock</button>
         </div>
-        <h1>House &amp; dog guide<br /><em>for Flynn.</em></h1>
+        <h1>House &amp; dog guide<br /><em>for Flynn &amp; Jeremy.</em></h1>
         <p>Thank you for doing this — it means we can actually relax. Everything you need for <strong>Chloe</strong> and <strong>Bengt</strong> is on this page, and you can ask the assistant below anything the guide doesn&apos;t answer clearly.</p>
         <span className="sitter-dates">{tripWindow.startLabel} – {tripWindow.endLabel}</span>
         <p style={{ marginTop: 10 }}>{bold(tripWindow.timezoneNote)}</p>
@@ -71,7 +71,7 @@ export default function SitterApp({ supabase, passphrase, onLock }: { supabase: 
 
       <SitterAi supabase={supabase} passphrase={passphrase} />
 
-      <p className="sitter-footer-note">This page is just for you, Flynn. If anything ever feels wrong with either dog, don&apos;t wait on us — call the vet, then call or WhatsApp us.</p>
+      <p className="sitter-footer-note">This page is just for you two, Flynn and Jeremy. If anything ever feels wrong with either dog, don&apos;t wait on us — call the vet, then call or WhatsApp us.</p>
     </div>
   </main>;
 }

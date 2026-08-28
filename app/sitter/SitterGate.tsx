@@ -59,7 +59,7 @@ export default function SitterGate() {
   return <main className="auth-shell">
     <section className="auth-card">
       <span className="auth-trip-mark" aria-hidden="true" style={{ display: 'grid', placeItems: 'center' }}><PawPrint size={24} color="#c9634c" /></span>
-      <p className="auth-kicker"><LockKeyhole size={13} /> For Flynn only</p>
+      <p className="auth-kicker"><LockKeyhole size={13} /> For Flynn (and Jeremy)</p>
       <h1>House &amp; dog<br /><em>guide.</em></h1>
       <p className="auth-lede">Enter the passphrase Patrik gave you to open the sitter guide.</p>
       {!isSupabaseConfigured ? <div className="auth-setup"><KeyRound size={20} /><div><strong>Not set up yet</strong><p>The sitter guide isn&apos;t configured yet on this deployment.</p></div></div> : <form className="auth-form" autoComplete="off" onSubmit={(event) => void unlock(event)}>

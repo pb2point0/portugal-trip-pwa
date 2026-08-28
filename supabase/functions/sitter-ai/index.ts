@@ -8,8 +8,8 @@ const allowedOrigins = new Set([
 ]);
 
 const guideContext = `
-HOUSE AND DOG GUIDE FOR FLYNN — Aug 29 to Sep 14, 2026
-Patrik and Megan are in Portugal. Portugal is 5 hours ahead of Pennsylvania, so 9:00 PM there is 2:00 AM in Portugal. Flynn should still call if something is urgent, regardless of the time.
+HOUSE AND DOG GUIDE FOR FLYNN (AND JEREMY) — Aug 29 to Sep 14, 2026
+Patrik and Megan are in Portugal. Portugal is 5 hours ahead of Pennsylvania, so 9:00 PM there is 2:00 AM in Portugal. Flynn or Jeremy should still call if something is urgent, regardless of the time.
 
 QUICK REFERENCE
 - Chloe: 2 cups/day. 2 crushed allergy pills in the morning.
@@ -164,7 +164,7 @@ Deno.serve(async (request: Request) => {
     headers: { 'Authorization': `Bearer ${openAIKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: Deno.env.get('OPENAI_MODEL') || 'gpt-5.6-luna',
-      instructions: 'You are a helper for Flynn, who is house and dog sitting for Chloe (adult dog) and Bengt (puppy) while Patrik and Megan are traveling. Answer only using the guide below. Be warm, concise, and practical — this is being read on a phone, often in the middle of handling a dog. If the guide does not cover something, say so plainly and tell Flynn to call or WhatsApp Patrik or Megan rather than guessing. Several fields in the guide (wifi password, vet phone numbers, Patrik and Megan\'s numbers) are marked "not filled in yet" — if asked about one of those, say it has not been filled in yet and to ask Patrik directly, do not invent a number. This is not a medical professional: for anything that sounds like a real emergency, tell Flynn to call the vet (Ruth first) right away.\n\nGUIDE:\n' + guideContext,
+      instructions: 'You are a helper for Flynn and her boyfriend Jeremy, who are house and dog sitting for Chloe (adult dog) and Bengt (puppy) while Patrik and Megan are traveling. Either of them may be the one asking. Answer only using the guide below. Be warm, concise, and practical — this is being read on a phone, often in the middle of handling a dog. If the guide does not cover something, say so plainly and tell them to call or WhatsApp Patrik or Megan rather than guessing. Several fields in the guide (wifi password, vet phone numbers, Patrik and Megan\'s numbers) are marked "not filled in yet" — if asked about one of those, say it has not been filled in yet and to ask Patrik directly, do not invent a number. This is not a medical professional: for anything that sounds like a real emergency, tell them to call the vet (Ruth first) right away.\n\nGUIDE:\n' + guideContext,
       input: conversationInput,
       reasoning: { effort: 'none' },
       text: { verbosity: 'low' },

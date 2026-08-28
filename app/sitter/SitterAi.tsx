@@ -4,6 +4,7 @@ import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { RotateCcw, Send } from 'lucide-react';
 import { rich } from './rich';
+import { functionError } from '../functionError';
 import '../portugal-ai.css';
 
 const chatStorageKey = 'sitter-ai-chat-v1';
@@ -44,7 +45,7 @@ export default function SitterAi({ supabase, passphrase }: { supabase: SupabaseC
     setStatus('');
 
     const { data, error } = await supabase.functions.invoke<AiResponse>('sitter-ai', { body: { action: 'ask', passphrase, question: cleanQuestion, history } });
-    if (error || !data?.answer) setStatus(data?.error || error?.message || 'The assistant could not answer right now.');
+    if (error || !data?.answer) setStatus(await functionError(error, data ?? null, 'The assistant could not answer right now.'));
     else setMessages((current) => [...current, { id: messageId(), role: 'assistant', content: data.answer! }]);
     setAsking(false);
   }

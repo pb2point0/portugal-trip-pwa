@@ -6,6 +6,7 @@ import { KeyRound, LockKeyhole } from 'lucide-react';
 import FullTripApp from './FullTripApp';
 import TripMark from './TripMark';
 import { getSupabase, isSupabaseConfigured } from './supabase';
+import { functionError } from './functionError';
 import './auth.css';
 import './auth-password.css';
 
@@ -59,7 +60,7 @@ export default function AuthGate() {
 
     const { data, error } = await supabase.functions.invoke<LoginResponse>('trip-login', { body: { passphrase: clean } });
     if (error || !data?.access_token || !data.refresh_token) {
-      setMessage(data?.error || 'That passphrase was not recognized.');
+      setMessage(await functionError(error, data, 'That passphrase was not recognized.'));
       setSigningIn(false);
       return;
     }

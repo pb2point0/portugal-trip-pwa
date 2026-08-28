@@ -3,6 +3,7 @@
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { RotateCcw, Send } from 'lucide-react';
+import { functionError } from './functionError';
 import './portugal-ai.css';
 
 type TripPhase='before'|'during'|'after';
@@ -47,7 +48,7 @@ export default function PortugalAi({supabase,base}:{supabase:SupabaseClient;base
     setStatus('');
 
     const{data,error}=await supabase.functions.invoke<AiResponse>('portugal-ai',{body:{question:cleanQuestion,history}});
-    if(error||!data?.answer)setStatus(data?.error||error?.message||'The assistant could not answer right now.');
+    if(error||!data?.answer)setStatus(await functionError(error,data??null,'The assistant could not answer right now.'));
     else setMessages((current)=>[...current,{id:messageId(),role:'assistant',content:data.answer!}]);
     setAsking(false);
   }

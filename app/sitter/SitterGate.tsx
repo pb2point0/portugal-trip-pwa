@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { KeyRound, LockKeyhole, PawPrint } from 'lucide-react';
 import SitterApp from './SitterApp';
 import { getSupabase, isSupabaseConfigured } from '../supabase';
+import { functionError } from '../functionError';
 import '../auth.css';
 
 const storageKey = 'sitter-passphrase';
@@ -42,7 +43,7 @@ export default function SitterGate() {
       setUnlocked(clean);
       setMessage('');
     } else {
-      setMessage(data?.error || 'That passphrase was not recognized.');
+      setMessage(await functionError(error, data, 'That passphrase was not recognized.'));
     }
     setVerifying(false);
   }

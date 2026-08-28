@@ -7,6 +7,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { ArrowLeft, BedDouble, Bus, CalendarDays, CarFront, Check, ChevronRight, Compass, Copy, ExternalLink, FileSpreadsheet, Heart, House, Languages, ListChecks, LogOut, MapPin, Menu, MessageCircle, NotebookText, Plane, Route, Send, Ticket, Train, Upload, Utensils, Volume2, X } from 'lucide-react';
 import { emptyTrip, type BookingItem, type PlanComment, type ReservationRecord, type Status, type TripDay, type TripPayload } from './trip-data';
 import { parseWorkbook } from './importWorkbook';
+import { functionError } from './functionError';
 import PortugalAi from './PortugalAi';
 import TripMark from './TripMark';
 import { WeatherForecast } from './trip-live';
@@ -217,7 +218,7 @@ export default function FullTripApp({ supabase, userEmail, onSignOut }: FullTrip
     setTranslating(true);
     setTranslateNote('');
     const {data,error}=await supabase.functions.invoke<{translation?:string;error?:string}>('portugal-ai',{body:{mode:'translate',direction,question:text}});
-    if(error||!data?.translation) setTranslateNote(data?.error||error?.message||'That could not be translated right now.');
+    if(error||!data?.translation) setTranslateNote(await functionError(error,data??null,'That could not be translated right now.'));
     else setTranslation(data.translation);
     setTranslating(false);
   }

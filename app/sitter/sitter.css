@@ -2,8 +2,8 @@
   --ocean:#073d57;--deep:#062e42;--sky:#c9e8f2;--sky2:#edf7f8;--sand:#e7d3aa;--sand2:#f4ead5;
   --forest:#2c6552;--foam:#f6f7f2;--paper:#fff;--ink:#12313e;--muted:#5d747c;--line:#dde5e2;--coral:#c9634c;
   --dusk:#4a5f86;--dusk2:#eef0f8;
-  --display:var(--sitter-display),Georgia,'Times New Roman',serif;
-  --body:var(--sitter-body),-apple-system,'Segoe UI',Arial,sans-serif;
+  --display:var(--font-display),Georgia,serif;
+  --body:var(--font-body),-apple-system,'Segoe UI',Arial,sans-serif;
   --nav-h:64px;
   position:relative;
   min-height:100svh;

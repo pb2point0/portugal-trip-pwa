@@ -18,7 +18,7 @@ The honeymoon app is opened with a shared passphrase rather than an email and pa
 
 Secrets, set in **Supabase → Edge Functions → Secrets**:
 
-- `TRIP_PASSPHRASE` — one passphrase, or several separated by commas.
+- `TRIP_PASSPHRASE` — a comma-separated list. Each entry is either `passphrase` or `Name:passphrase`. Every passphrase opens the same trip account, and the name is only used to attribute day notes to whoever signed in, so `Sweta:Sweta123,Patrik:Patrik123` labels their notes correctly. Without a name, the leading letters of the passphrase are used.
 - `TRIP_EMAIL` — the Supabase auth user the session is minted for. It must have a row in `public.trip_members`.
 - `SUPABASE_SERVICE_ROLE_KEY` — already required by `sitter-ai`.
 

@@ -53,8 +53,17 @@ Deno.serve(async (request: Request) => {
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   const publishableKey = getPublishableKey();
   const tripEmail = Deno.env.get('TRIP_EMAIL');
-  // TRIP_PASSPHRASE holds one passphrase, or several separated by commas.
-  const passphrases = (Deno.env.get('TRIP_PASSPHRASE') || '').split(',').map((value) => value.trim()).filter(Boolean);
+  // TRIP_PASSPHRASE is a comma-separated list. Each entry is either "passphrase"
+  // or "Name:passphrase", so trip notes can be attributed to whoever signed in.
+  const passphrases = (Deno.env.get('TRIP_PASSPHRASE') || '').split(',').map((entry) => {
+    const trimmed = entry.trim();
+    if (!trimmed) return null;
+    const split = trimmed.indexOf(':');
+    if (split > 0) return { name: trimmed.slice(0, split).trim(), secret: trimmed.slice(split + 1).trim() };
+    // No explicit name, so fall back to the leading letters of the passphrase.
+    const derived = trimmed.match(/^[A-Za-z]+/)?.[0];
+    return { name: derived ? derived[0].toUpperCase() + derived.slice(1) : 'Traveler', secret: trimmed };
+  }).filter((entry): entry is { name: string; secret: string } => !!entry?.secret);
   if (!supabaseUrl || !serviceRoleKey || !publishableKey || !tripEmail || !passphrases.length) {
     return json({ error: 'Sign-in is not configured yet.' }, 503, origin);
   }
@@ -77,9 +86,9 @@ Deno.serve(async (request: Request) => {
     .eq('identifier', identifier).eq('kind', 'fail').gte('created_at', windowStart);
   if ((failures ?? 0) >= 5) return json({ error: 'Too many attempts. Wait a few minutes and try again.' }, 429, origin);
 
-  let ok = false;
-  for (const candidate of passphrases) if (timingSafeEqual(passphrase, candidate)) ok = true;
-  if (!ok) {
+  let signedInAs = '';
+  for (const candidate of passphrases) if (timingSafeEqual(passphrase, candidate.secret)) signedInAs = candidate.name;
+  if (!signedInAs) {
     await admin.from('sitter_ai_events').insert({ identifier, kind: 'fail' });
     return json({ error: 'That passphrase was not recognized.' }, 401, origin);
   }
@@ -103,5 +112,6 @@ Deno.serve(async (request: Request) => {
   return json({
     access_token: verified.session.access_token,
     refresh_token: verified.session.refresh_token,
+    name: signedInAs,
   }, 200, origin);
 });

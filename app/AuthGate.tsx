@@ -12,7 +12,8 @@ import './auth-password.css';
 
 const rememberKey = 'portugal-remember-device';
 const sessionMarker = 'portugal-session-active';
-type LoginResponse = { access_token?: string; refresh_token?: string; error?: string };
+type LoginResponse = { access_token?: string; refresh_token?: string; name?: string; error?: string };
+const nameKey = 'portugal-signed-in-as';
 
 export default function AuthGate() {
   const [session, setSession] = useState<Session | null>(null);
@@ -20,6 +21,7 @@ export default function AuthGate() {
   const [passphrase, setPassphrase] = useState('');
   const [rememberDevice, setRememberDevice] = useState(true);
   const [signingIn, setSigningIn] = useState(false);
+  const [signedInAs, setSignedInAs] = useState(() => typeof window === 'undefined' ? '' : (window.localStorage.getItem(nameKey) ?? ''));
   const [message, setMessage] = useState('');
   const supabase = getSupabase();
 
@@ -64,6 +66,10 @@ export default function AuthGate() {
       setSigningIn(false);
       return;
     }
+    if (data.name) {
+      window.localStorage.setItem(nameKey, data.name);
+      setSignedInAs(data.name);
+    }
     const { error: sessionError } = await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
     setMessage(sessionError ? 'Could not open the trip. Try again.' : '');
     setSigningIn(false);
@@ -71,22 +77,23 @@ export default function AuthGate() {
 
   async function signOut() {
     localStorage.removeItem('trip-weather-v1');
+    localStorage.removeItem(nameKey);
     sessionStorage.removeItem(sessionMarker);
     await supabase?.auth.signOut();
   }
 
   if (loading) return <main className="auth-shell"><div className="auth-loader" aria-label="Loading"/></main>;
-  if (session && supabase) return <FullTripApp supabase={supabase} userEmail={session.user.email ?? 'Traveler'} onSignOut={signOut}/>;
+  if (session && supabase) return <FullTripApp supabase={supabase} userEmail={signedInAs || session.user.email || 'Traveler'} onSignOut={signOut}/>;
 
   return <main className="auth-shell">
     <section className="auth-card">
       <TripMark className="auth-trip-mark"/>
-      <p className="auth-kicker"><LockKeyhole size={13}/> Just the two of us</p>
+      <p className="auth-kicker"><LockKeyhole size={13}/> Invited travelers</p>
       <h1>Our Portugal<br/><em>honeymoon.</em></h1>
       <p className="auth-lede">Enter the passphrase to open the itinerary, reservations, routes, and plans.</p>
-      {!isSupabaseConfigured ? <div className="auth-setup"><KeyRound size={20}/><div><strong>Supabase setup needed</strong><p>Add the project URL and publishable key to the GitHub repository secrets before deployment.</p></div></div> : <form className="auth-form" autoComplete="off" onSubmit={(event) => void signIn(event)}>
-        <label htmlFor="passphrase">Passphrase</label>
-        <div><LockKeyhole size={18}/><input id="passphrase" name="passphrase" type="password" inputMode="numeric" autoComplete="off" autoCapitalize="none" spellCheck={false} enterKeyHint="go" value={passphrase} onChange={e=>setPassphrase(e.target.value)} placeholder="Passphrase"/></div>
+      {!isSupabaseConfigured ? <div className="auth-setup"><KeyRound size={20}/><div><strong>Supabase setup needed</strong><p>Add the project URL and publishable key to the GitHub repository secrets before deployment.</p></div></div> : <form className="auth-form" autoComplete="on" onSubmit={(event) => void signIn(event)}>
+        <label htmlFor="password">Passphrase</label>
+        <div><LockKeyhole size={18}/><input id="password" name="password" type="password" autoComplete="current-password" autoCapitalize="none" spellCheck={false} enterKeyHint="go" value={passphrase} onChange={e=>setPassphrase(e.target.value)} placeholder="Passphrase"/></div>
         <label className="auth-remember"><input type="checkbox" checked={rememberDevice} onChange={(event)=>setRememberDevice(event.target.checked)}/><span>Remember this device</span></label>
         <button type="submit" disabled={signingIn || !passphrase.trim()}>{signingIn ? 'Opening…' : 'Open our honeymoon'}</button>
         {message&&<p role="status">{message}</p>}

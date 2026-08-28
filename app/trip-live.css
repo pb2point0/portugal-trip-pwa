@@ -2,11 +2,21 @@
 @media(max-width:900px){.weather-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:620px){.weather-section{padding-top:54px}.weather-section .section-heading{display:block}.weather-section .section-heading>small{display:block;text-align:left;margin-top:8px}.weather-grid{display:flex;overflow:auto;padding-bottom:4px}.weather-grid article{min-width:220px}.mobility-options{grid-template-columns:1fr}.mobility-panel{margin-left:-58px}.site-header{padding-top:env(safe-area-inset-top);height:calc(68px + env(safe-area-inset-top))}}
 
-/* Mobile shell keeps navigation out of content */
+/* Mobile shell.
+   This used to be a locked 100dvh grid with .page-wrap as an inner scroller.
+   That keeps the document itself from ever scrolling, so iOS Safari never
+   collapses its bottom toolbar, and the fixed nav sits permanently above it.
+   Scrolling the document instead lets the toolbar collapse and puts the nav
+   on the real bottom edge, the same way the sitter guide behaves. */
 @media(max-width:620px){
-  .app-shell{height:100svh;height:100dvh;min-height:0;display:grid;grid-template-rows:calc(68px + env(safe-area-inset-top)) minmax(0,1fr);overflow:hidden}
-  .site-header{width:100%;height:100%}
-  .page-wrap{width:100%;height:100%;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding-bottom:calc(92px + env(safe-area-inset-bottom))}
+  .app-shell{height:auto;min-height:100svh;display:block;overflow:visible}
+  .site-header{
+    position:sticky;top:0;z-index:70;width:100%;
+    background:rgba(248,250,246,.88);
+    -webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);
+    border-bottom:1px solid rgba(7,61,87,.07);
+  }
+  .page-wrap{width:100%;height:auto;min-height:0;overflow:visible;padding-bottom:calc(92px + env(safe-area-inset-bottom))}
   /* The floating pill is styled in full-trip.css. Do not re-pin it here. */
 }
 

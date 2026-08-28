@@ -7,64 +7,19 @@ import './portugal-ai.css';
 
 type TripPhase='before'|'during'|'after';
 
-const suggestionBanks: Record<string,(place:string)=>string[]> = {
-  porto:(place)=>[
-    `What is worth doing near ${place} if we have two relaxed hours?`,
-    `Give us a rainy-day backup around ${place}.`,
-    `Best cellar or tasting near ${place} tonight?`,
-  ],
-  funchal:(place)=>[
-    `What is worth doing near ${place} if we have two relaxed hours?`,
-    `Give us a rainy-day backup around ${place}.`,
-    `Where should we eat seafood near ${place}?`,
-  ],
-  'ponta do sol':(place)=>[
-    `What's a good slow morning near ${place}?`,
-    `Give us a rainy-day backup around ${place}.`,
-    `Best sunset spot near ${place} tonight?`,
-  ],
-  setúbal:()=>[
-    'What is worth doing near Setúbal if we have two relaxed hours?',
-    'Give us a rainy-day backup around Setúbal.',
-    'Quick local food recommendation near Setúbal?',
-  ],
-};
-const beforeTripQuestions=[
-  'What should we pack for this time of year in Portugal?',
-  'Any must-book restaurants before we land?',
-  'What’s the fastest way from the airport to our first stop?',
-];
-const afterTripQuestions=[
-  'Recap: what were the trip’s highlights?',
-  'What should we remember for next time?',
-  'Any lingering to-dos from the trip?',
-];
 
-function quickQuestions(base:string,tripPhase:TripPhase){
-  const place=base.trim()||'Portugal';
-  if (tripPhase==='before') return beforeTripQuestions;
-  if (tripPhase==='after') return afterTripQuestions;
-  const bank=Object.entries(suggestionBanks).find(([key])=>place.toLowerCase().includes(key));
-  if (bank) return bank[1](place);
-  return [
-    `What is worth doing near ${place} if we have two relaxed hours?`,
-    `Give us a rainy-day backup around ${place}.`,
-    `What should we eat or drink around ${place}?`,
-  ];
-}
 
 const chatStorageKey='portugal-ai-chat-v2';
 type ChatMessage={id:string;role:'user'|'assistant';content:string};
 type AiResponse={answer?:string;error?:string};
 const messageId=()=>typeof crypto!=='undefined'&&'randomUUID' in crypto?crypto.randomUUID():Date.now()+'-'+Math.random();
 
-export default function PortugalAi({supabase,base,tripPhase}:{supabase:SupabaseClient;base:string;tripPhase:TripPhase}){
+export default function PortugalAi({supabase,base}:{supabase:SupabaseClient;base:string;tripPhase:TripPhase}){
   const [question,setQuestion]=useState('');
   const [messages,setMessages]=useState<ChatMessage[]>([]);
   const [status,setStatus]=useState('');
   const [asking,setAsking]=useState(false);
   const endRef=useRef<HTMLDivElement>(null);
-  const suggestions=quickQuestions(base,tripPhase);
 
   useEffect(()=>{
     try{
@@ -114,7 +69,6 @@ export default function PortugalAi({supabase,base,tripPhase}:{supabase:SupabaseC
       {messages.length>0&&<button className="ai-reset" type="button" onClick={resetChat}><RotateCcw size={14}/>New chat</button>}
     </header>
 
-    {messages.length===0&&<div className="ai-prompts" aria-label={'Suggested questions for '+base}>{suggestions.map((prompt)=><button key={prompt} type="button" onClick={()=>void ask(undefined,prompt)}>{prompt}</button>)}</div>}
 
     {messages.length>0&&<div className="ai-conversation" aria-live="polite">
       {messages.map((item)=><article key={item.id} className={'ai-message '+item.role}><small>{item.role==='assistant'?'Trip assistant':'You'}</small><p>{item.content}</p></article>)}

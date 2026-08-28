@@ -20,6 +20,19 @@ The publishable Supabase key is intentionally used by the browser. Database row-
 - AI rate limiting stores request timestamps only.
 - Signing out removes the active Supabase session. Trip payloads are not persisted in the browser by application code.
 
+## Sitter guide app
+
+`yoursite.com/sitter/` is a separate, much simpler page for whoever is house/dog sitting while you're away. It has no per-user Supabase login — instead it's gated by one shared passphrase, checked server-side by the `sitter-ai` Edge Function on every request.
+
+1. Run the updated [`supabase/schema.sql`](supabase/schema.sql) (adds the `sitter_ai_events` table used for rate limiting; it's only ever touched by the service role key, so it needs no RLS policies).
+2. Deploy `supabase/functions/sitter-ai` with **Verify JWT** disabled (already set via `verify_jwt = false` in `supabase/config.toml`).
+3. In **Supabase → Edge Functions → Secrets**, add:
+   - `SITTER_PASSPHRASE` — the passphrase you'll text the sitter.
+   - `SUPABASE_SERVICE_ROLE_KEY` — from Project Settings → API. This is different from the publishable key the browser uses; never expose it client-side.
+   - `OPENAI_API_KEY` (can reuse the same key as `portugal-ai`).
+4. Fill in the blanks in [`app/sitter/sitter-data.ts`](app/sitter/sitter-data.ts) — wifi password, vet/emergency contacts, and your and Megan's phone numbers — before sending the link. Anything left blank shows as "not filled in yet" on the page, and the assistant is instructed to say the same rather than guess. The same guide text (kept in sync by hand) is baked into `supabase/functions/sitter-ai/index.ts` as the AI's context, so update both files together.
+5. Send the sitter `https://yoursite.com/sitter/` and the passphrase.
+
 ## Local development
 
 Copy `.env.example` to `.env.local`, add the intended Supabase project values, then run:

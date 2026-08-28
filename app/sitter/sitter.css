@@ -1,0 +1,46 @@
+.sitter-app{--ocean:#073d57;--deep:#062e42;--sky:#c9e8f2;--sky2:#edf7f8;--sand:#e7d3aa;--sand2:#f4ead5;--forest:#2c6552;--foam:#f6f7f2;--paper:#fff;--ink:#12313e;--muted:#60757d;--line:#d7e1de;--coral:#c9634c;--shadow:0 22px 70px rgba(7,61,87,.12);min-height:100svh;background:linear-gradient(160deg,var(--foam) 0%,#eef4f1 100%);padding:20px 16px 60px}
+.sitter-shell{max-width:720px;margin:0 auto;display:grid;gap:20px}
+
+.sitter-header{background:var(--paper);border:1px solid var(--line);border-radius:26px;padding:26px;box-shadow:var(--shadow)}
+.sitter-header-top{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.sitter-mark{width:44px;height:44px;border-radius:14px;background:var(--ocean);color:#fff;display:grid;place-items:center;flex:0 0 auto}
+.sitter-lock{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--muted);padding:8px 10px;font-size:9px;font-weight:900;cursor:pointer;text-transform:uppercase;letter-spacing:.06em}
+.sitter-header h1{font:500 clamp(26px,6vw,34px)/1.1 Georgia,serif;color:var(--deep);margin:16px 0 6px}
+.sitter-header h1 em{font-style:normal;color:var(--forest)}
+.sitter-header p{color:var(--muted);font-size:13px;line-height:1.6;margin:0}
+.sitter-header p strong{color:var(--coral)}
+.sitter-dates{display:inline-flex;align-items:center;gap:7px;margin-top:14px;background:var(--sky2);border-radius:999px;padding:8px 14px;color:var(--ocean);font-size:11px;font-weight:800}
+
+.sitter-quickref{background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 12px 38px rgba(7,61,87,.07)}
+.sitter-quickref h2{font:500 15px Georgia,serif;color:var(--deep);margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.sitter-quickref-grid{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.sitter-quickref-row{display:grid;grid-template-columns:130px 1fr;gap:10px;background:#fff;padding:11px 14px}
+.sitter-quickref-row dt{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:var(--forest)}
+.sitter-quickref-row dd{margin:0;font-size:12.5px;line-height:1.5;color:var(--ink)}
+
+.sitter-section{background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 12px 38px rgba(7,61,87,.07)}
+.sitter-section h2{font:500 16px Georgia,serif;color:var(--deep);margin:0 0 12px}
+.sitter-section p,.sitter-section li{font-size:13px;line-height:1.65;color:var(--ink);margin:0 0 10px}
+.sitter-section p:last-child,.sitter-section li:last-child{margin-bottom:0}
+.sitter-section p strong,.sitter-section li strong{color:var(--forest)}
+.sitter-section.crate{background:linear-gradient(160deg,#fff 0%,var(--sky2) 100%);border-color:rgba(7,61,87,.18)}
+
+.sitter-contacts{background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 12px 38px rgba(7,61,87,.07)}
+.sitter-contacts h2{font:500 16px Georgia,serif;color:var(--deep);margin:0 0 12px}
+.sitter-contact-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:11px 0;border-top:1px solid var(--line)}
+.sitter-contact-row:first-of-type{border-top:0}
+.sitter-contact-who{font-weight:800;color:var(--ink);font-size:13px}
+.sitter-contact-role{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.sitter-contact-value{font-size:13px;color:var(--ocean);font-weight:700;text-align:right;white-space:nowrap}
+.sitter-contact-value.missing{color:var(--coral);font-style:italic;font-weight:600;font-size:11px}
+
+.sitter-footer-note{text-align:center;color:var(--muted);font-size:10px;line-height:1.6;padding:6px 12px 0}
+
+.kicker{display:flex;align-items:center;gap:6px;color:var(--forest);font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;margin:0}
+
+@media(max-width:480px){
+  .sitter-quickref-row{grid-template-columns:1fr}
+  .sitter-quickref-row dt{margin-bottom:2px}
+  .sitter-contact-row{flex-direction:column;align-items:flex-start;gap:2px}
+  .sitter-contact-value{text-align:left}
+}

@@ -1,2 +1,5 @@
 [functions.portugal-ai]
 verify_jwt = true
+
+[functions.sitter-ai]
+verify_jwt = false

@@ -72,3 +72,19 @@ $$;
 drop trigger if exists set_trip_updated_at on public.trip_data;
 create trigger set_trip_updated_at before update on public.trip_data
 for each row execute function public.set_trip_updated_at();
+
+-- Sitter guide app (separate passphrase-gated route, no per-user Supabase auth).
+-- The sitter-ai Edge Function talks to this table with the service role key, which
+-- bypasses RLS, so no anon/authenticated policies or grants are added here on purpose.
+create table if not exists public.sitter_ai_events (
+  id uuid primary key default gen_random_uuid(),
+  identifier text not null,
+  kind text not null check (kind in ('fail', 'ask')),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists sitter_ai_events_identifier_created_idx
+on public.sitter_ai_events (identifier, kind, created_at desc);
+
+alter table public.sitter_ai_events enable row level security;
+revoke all on table public.sitter_ai_events from anon, authenticated;
